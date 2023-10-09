@@ -14,7 +14,7 @@ class VertexBufferLayout {
     std::vector<VertexBufferElement> elements;
     int stride;
 public:
-    VertexBufferLayout() = default;
+    VertexBufferLayout() : stride(0) {};
     const std::vector<VertexBufferElement>& getLayoutElements() const;
     template<typename T>
     void addLayoutElement(int count);

@@ -1,8 +1,6 @@
 # Add the shader source files to the ShaderLibrary target
 add_library(VertexBuffer vertex_buffer.cpp vertex_buffer.h)
 
-target_sources(VertexBuffer PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../primitives/primitives.h")
-
 # Link ShaderLibrary with Glad and other dependencies
 target_link_libraries(VertexBuffer PRIVATE glad glm)
 

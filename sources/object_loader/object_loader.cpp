@@ -72,8 +72,8 @@ void ObjectLoader<T>::init(std::string_view filePath) {
 					int vti = std::stoi(vt) - 1;
 					int ni = std::stoi(n) - 1;
 					this->vertices.emplace_back(Vertex3D{ vertices[vi], texCoords[vti], normals[ni] });
-					st.insert({ tmp, maxIndex++ });
-					this->indices.emplace_back(maxIndex);
+					st.insert({ tmp, maxIndex });
+					this->indices.emplace_back(maxIndex++);
 				}
 				else
 					this->indices.emplace_back(it->second);

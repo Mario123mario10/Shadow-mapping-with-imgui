@@ -5,7 +5,10 @@
 // our libraries
 #include <shader.h>
 #include <vertex_buffer.h>
+#include <vertex_array.h>
 #include <object_loader.h>
+#include <index_buffer.h>
+#include <primitives.h>
 // standard template libraries
 #include <fstream>
 #include <sstream>
@@ -29,7 +32,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create a GLFW windowed mode window and its OpenGL context
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Interpolated Triangle with Shaders", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Interpolated Triangle with Shaders", NULL, NULL);
     if (!window) {
         std::cerr << "Failed to create GLFW window." << std::endl;
         glfwTerminate();
@@ -38,12 +41,15 @@ int main() {
 
     // Make the window's context current
     glfwMakeContextCurrent(window);
-
+    glfwSwapInterval(0);
     // Initialize GLAD to load OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD." << std::endl;
         return -1;
     }
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
     //ObjectLoader<unsigned char> obj(MODELS_PATH "cube.obj");
     // Set the viewport size and register framebuffer size callback
     int screenWidth, screenHeight;
@@ -52,60 +58,52 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
     ObjectLoader<unsigned char> obj(MODELS_PATH "cube.obj");
-    VertexBuffer vb;
 
-    // Vertex data for an interpolated triangle
-    float vertices[] = {
-        // Positions         // Colors
-        -0.6f, -0.5f, 1.0f, 0.0f, 0.0f,  // Vertex 1: Red
-         0.6f, -0.5f, 0.0f, 1.0f, 0.0f,  // Vertex 2: Green
-         0.0f,  0.5f, 0.0f, 0.0f, 1.0f   // Vertex 3: Blue
-    };
+    VertexArray vao;
+    VertexBuffer vbo;
+    IndexBuffer ibo;
 
-    // Vertex Array Object (VAO) and Vertex Buffer Object (VBO) setup
-    GLuint vao, vbo;
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
-
-    glBindVertexArray(vao);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // Position attribute
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // Color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
+    {
+        vao.use();
+        vbo.use();
+        ibo.use();
+        ibo.parseElementData(obj.getIndices());
+        VertexBufferLayout layout = vbo.parseVertexData(obj.getVertices());
+        vao.addLayout(layout);
+    }
+    
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    glm::vec3 cameraPos = glm::vec3(-1.0f, 3.0f, -3.0f);
+    glm::vec3 point = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::mat4 view = glm::lookAt(cameraPos, point, worldUp);
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f), static_cast<float>(screenWidth) / static_cast<float>(screenHeight), 0.1f, 100.0f);
+    glm::mat4 PVM = projection * view * model;
     // Main loop
+    float t = 0.0f;
+    float stop = 0.0f;
     while (!glfwWindowShouldClose(window)) {
+        float deltaTime = glfwGetTime() - stop;
+        stop = glfwGetTime();
         // Poll for and process events
         glfwPollEvents();
 
         // Rendering commands here
         // Clear the color buffer
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        model = glm::rotate(glm::mat4(1.0f), t, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        t += deltaTime;
         // Use the shader program and draw the triangle
         shader.use();
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        shader.modifyUniform<glm::mat4>("PVM", projection * view * model);
+        vao.use();
+        glDrawElements(GL_TRIANGLES, obj.getIndices().size(), obj.getType(), 0);
         glBindVertexArray(0);
 
         // Swap the front and back buffers
         glfwSwapBuffers(window);
     }
-
-    // Clean up
-    glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &vbo);
 
     // Terminate GLFW
     glfwTerminate();

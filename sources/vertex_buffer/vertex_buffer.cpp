@@ -47,6 +47,7 @@ VertexBufferLayout VertexBuffer::parseVertexData(const std::vector<Vertex3D>& ve
     VertexBufferLayout layout;
     layout.addLayoutElement<float>(3);
     layout.addLayoutElement<float>(2);
+    layout.addLayoutElement<float>(3);
     glBufferData(GL_ARRAY_BUFFER, size, &vertexData[0], GL_STATIC_DRAW);
     return layout;
 }
