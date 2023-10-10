@@ -29,6 +29,7 @@ add_subdirectory(sources/vertex_buffer)
 add_subdirectory(sources/object_loader)
 add_subdirectory(sources/vertex_array)
 add_subdirectory(sources/primitives)
+add_subdirectory(sources/camera)
 
 add_executable("${CMAKE_PROJECT_NAME}")
 
@@ -54,9 +55,10 @@ target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURC
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/index_buffer")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/vertex_array")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/primitives")
+target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/camera")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 # here link against library created in your module
-target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE ShaderLibrary VertexArray VertexBuffer ObjectLoader IndexBuffer)
+target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE ShaderLibrary VertexArray VertexBuffer ObjectLoader IndexBuffer Camera)
 
 # thirdparty libraries
 target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE glm glfw glad stb_image stb_truetype imgui)
