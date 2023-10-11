@@ -10,6 +10,10 @@ unsigned int Texture::getType() const {
 	return type;
 }
 
+unsigned int Texture::getId() const {
+	return id;
+}
+
 void Texture::activate(unsigned int slot)  const {
 	glBindTextureUnit(slot, id);
 }

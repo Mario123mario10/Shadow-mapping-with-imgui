@@ -8,6 +8,7 @@ public:
 	Texture(unsigned int type);
 	unsigned int getType() const;
 	void activate(unsigned int slot) const;
+	unsigned int getId() const;
 	virtual ~Texture() =0;
 };
 
