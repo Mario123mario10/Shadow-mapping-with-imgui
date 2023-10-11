@@ -10,6 +10,9 @@
 #include <index_buffer.h>
 #include <primitives.h>
 #include <camera.h>
+#include <texture.h>
+#include <framebuffer.h>
+#include <renderbuffer.h>
 // standard template libraries
 #include <fstream>
 #include <sstream>
@@ -67,8 +70,13 @@ int main() {
     vbo.use();
     ibo.use();
     ibo.parseElementData(obj.getIndices());
-    VertexBufferLayout layout = vbo.parseVertexData(obj.getVertices());
-    vao.addLayout(layout);
+    vbo.parseVertexData(obj.getVertices());
+    vao.setLayout<Vertex3D>();
+
+    int samples = { 4 };
+    Texture2DMultisample hdrTexture(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);
+    RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);
+    Framebuffer hdrFramebuffer({ GL_COLOR_ATTACHMENT0 }, GL_NONE);
     
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     camera.setMovementSpeed(3.0f);

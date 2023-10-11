@@ -7,7 +7,8 @@ class VertexArray {
 public:
 	VertexArray();
 	~VertexArray();
-	void addLayout(VertexBufferLayout& layout);
+	template<typename T>
+	void setLayout();
 	void use() const;
 	void unUse() const;
 };
