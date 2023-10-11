@@ -42,33 +42,10 @@ VertexBuffer::~VertexBuffer() {
     glDeleteBuffers(1, &id);
 }
 
-VertexBufferLayout VertexBuffer::parseVertexData(const std::vector<Vertex3D>& vertexData) {
+void VertexBuffer::parseVertexData(const std::vector<Vertex3D>& vertexData) {
     const unsigned int size = vertexData.size() * sizeof(Vertex3D);
-    VertexBufferLayout layout;
-    layout.addLayoutElement<float>(3);
-    layout.addLayoutElement<float>(2);
-    layout.addLayoutElement<float>(3);
     glBufferData(GL_ARRAY_BUFFER, size, &vertexData[0], GL_STATIC_DRAW);
-    return layout;
 }
-
-VertexBufferLayout VertexBuffer::parseVertexData(const std::vector<Vertex2D>& vertexData) {
-    const unsigned int size = vertexData.size() * sizeof(Vertex2D);
-    VertexBufferLayout layout;
-    layout.addLayoutElement<float>(2);
-    layout.addLayoutElement<float>(2);
-    glBufferData(GL_ARRAY_BUFFER, size, &vertexData[0], GL_STATIC_DRAW);
-    return layout;
-}
-
-VertexBufferLayout VertexBuffer::parseVertexData(const std::vector<glm::vec3>& vertexData) {
-    const unsigned int size = vertexData.size() * sizeof(glm::vec3);
-    VertexBufferLayout layout;
-    layout.addLayoutElement<float>(3);
-    glBufferData(GL_ARRAY_BUFFER, size, &vertexData[0], GL_STATIC_DRAW);
-    return layout;
-}
-
 
 void VertexBuffer::use() const {
     glBindBuffer(GL_ARRAY_BUFFER, id);

@@ -28,9 +28,7 @@ public:
     VertexBuffer();
     ~VertexBuffer();
     void parseRawData(int size, const void* data);
-    VertexBufferLayout parseVertexData(const std::vector<Vertex3D>& vertexData);
-    VertexBufferLayout parseVertexData(const std::vector<Vertex2D>& vertexData);
-    VertexBufferLayout parseVertexData(const std::vector<glm::vec3>& vertexData);
+    void parseVertexData(const std::vector<Vertex3D>& vertexData);
     void use() const;
     void unUse() const;
 };

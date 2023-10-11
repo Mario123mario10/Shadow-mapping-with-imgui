@@ -68,8 +68,8 @@ int main() {
     vbo.use();
     ibo.use();
     ibo.parseElementData(obj.getIndices());
-    VertexBufferLayout layout = vbo.parseVertexData(obj.getVertices());
-    vao.addLayout(layout);
+    vbo.parseVertexData(obj.getVertices());
+    vao.setLayout<Vertex3D>();
     
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     camera.setMovementSpeed(3.0f);

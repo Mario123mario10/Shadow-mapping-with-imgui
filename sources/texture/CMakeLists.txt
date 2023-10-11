@@ -5,5 +5,6 @@ add_library(Texture texture.cpp texture.h)
 target_link_libraries(Texture PRIVATE glad)
 
 target_include_directories(Texture PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Texture PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../primitives)
 
 # You can set additional properties or dependencies for ShaderLibrary here if needed.

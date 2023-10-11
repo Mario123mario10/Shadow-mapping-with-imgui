@@ -12,8 +12,20 @@ VertexArray::~VertexArray() {
 	glDeleteVertexArrays(1, &id);
 }
 
-void VertexArray::addLayout(VertexBufferLayout& layout) {
+template<typename T>
+void VertexArray::setLayout() {
+	static_assert(false, "VertexArray::addLayout invalid type");
+}
+
+template<>
+void VertexArray::setLayout<Vertex3D>() {
+	VertexBufferLayout layout;
+	layout.addLayoutElement<float>(3);
+	layout.addLayoutElement<float>(2);
+	layout.addLayoutElement<float>(3);
+
 	const std::vector<VertexBufferElement> elements = layout.getLayoutElements();
+
 	int offset = {};
 	int stride = layout.getStride();
 	for (int i = 0; i < elements.size(); i++) {
