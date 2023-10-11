@@ -10,6 +10,7 @@
 #include <index_buffer.h>
 #include <primitives.h>
 #include <camera.h>
+#include <texture.h>
 // standard template libraries
 #include <fstream>
 #include <sstream>

@@ -14,7 +14,7 @@ add_subdirectory(thirdparty/glad)
 add_subdirectory(thirdparty/stb_image)			
 add_subdirectory(thirdparty/stb_truetype)		
 add_subdirectory(thirdparty/glm)				
-add_subdirectory(thirdparty/imgui-docking)		
+add_subdirectory(thirdparty/imgui-docking)
 
 
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
@@ -30,6 +30,7 @@ add_subdirectory(sources/object_loader)
 add_subdirectory(sources/vertex_array)
 add_subdirectory(sources/primitives)
 add_subdirectory(sources/camera)
+add_subdirectory(sources/texture)
 
 add_executable("${CMAKE_PROJECT_NAME}")
 
@@ -56,9 +57,10 @@ target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURC
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/vertex_array")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/primitives")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/camera")
+target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/texture")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 # here link against library created in your module
-target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE ShaderLibrary VertexArray VertexBuffer ObjectLoader IndexBuffer Camera)
+target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE ShaderLibrary VertexArray VertexBuffer ObjectLoader IndexBuffer Camera Texture)
 
 # thirdparty libraries
 target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE glm glfw glad stb_image stb_truetype imgui)
