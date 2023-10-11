@@ -57,6 +57,7 @@ target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURC
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/primitives")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/camera")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+
 # here link against library created in your module
 target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE ShaderLibrary VertexArray VertexBuffer ObjectLoader IndexBuffer Camera)
 

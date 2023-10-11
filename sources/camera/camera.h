@@ -53,6 +53,7 @@ class FPSCamera : public PerspectiveCamera {
     float lastx, lasty;
     float yaw, pitch;
     float movementSpeed;
+    float mouseSpeed;
 public:
     FPSCamera(float near, float far, float aspectRatio, const glm::vec3& position, float fovy);
     void updateEuler(float mousex, float mousey);
