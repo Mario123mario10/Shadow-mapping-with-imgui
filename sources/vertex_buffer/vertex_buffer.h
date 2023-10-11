@@ -28,7 +28,14 @@ public:
     VertexBuffer();
     ~VertexBuffer();
     void parseRawData(int size, const void* data);
-    void parseVertexData(const std::vector<Vertex3D>& vertexData);
+    template<typename T>
+    void parseVertexData(const std::vector<T>& vertexData);
     void use() const;
     void unUse() const;
 };
+
+template<typename T>
+void VertexBuffer::parseVertexData(const std::vector<T>& vertexData) {
+    const unsigned int size = vertexData.size() * sizeof(T);
+    glBufferData(GL_ARRAY_BUFFER, size, &vertexData[0], GL_STATIC_DRAW);
+}

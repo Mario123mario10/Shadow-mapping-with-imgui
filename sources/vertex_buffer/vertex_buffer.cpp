@@ -42,11 +42,6 @@ VertexBuffer::~VertexBuffer() {
     glDeleteBuffers(1, &id);
 }
 
-void VertexBuffer::parseVertexData(const std::vector<Vertex3D>& vertexData) {
-    const unsigned int size = vertexData.size() * sizeof(Vertex3D);
-    glBufferData(GL_ARRAY_BUFFER, size, &vertexData[0], GL_STATIC_DRAW);
-}
-
 void VertexBuffer::use() const {
     glBindBuffer(GL_ARRAY_BUFFER, id);
 }

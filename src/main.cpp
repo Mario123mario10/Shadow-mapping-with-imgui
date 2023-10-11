@@ -61,6 +61,7 @@ int main() {
     
     FPSCamera camera(0.1f, 100.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
     Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
+    Shader shaderMSAA(SHADERS_PATH "multisample_to_texture_2d.vert.glsl", SHADERS_PATH "multisample_to_texture_2d.frag.glsl");
     ObjectLoader<unsigned char> obj(MODELS_PATH "cube.obj");
 
     VertexArray vao;
@@ -73,10 +74,40 @@ int main() {
     vbo.parseVertexData(obj.getVertices());
     vao.setLayout<Vertex3D>();
 
-    int samples = { 4 };
+    std::vector<Vertex2D> screenVertices = {
+        { {-1.0f, -1.0f},   {0.0f, 0.0f} },
+        { { 1.0f, -1.0f},   {1.0f, 0.0f} },
+        { { 1.0f,  1.0f},   {1.0f, 1.0f} },
+        { {-1.0f,  1.0f},   {0.0f, 1.0f} },
+    };
+
+    std::vector<unsigned char> screenIndices = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    VertexArray vaoScreen;
+    VertexBuffer vboScreen;
+    IndexBuffer iboScreen;
+    vaoScreen.use();
+    vboScreen.use();
+    iboScreen.use();
+    vboScreen.parseVertexData(screenVertices);
+    iboScreen.parseElementData(screenIndices);
+    vaoScreen.setLayout<Vertex2D>();
+
+    int samples = { 8 };
     Texture2DMultisample hdrTexture(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);
-    RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);
+    RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT32F, samples);
     Framebuffer hdrFramebuffer({ GL_COLOR_ATTACHMENT0 }, GL_NONE);
+    hdrFramebuffer.use();
+    hdrFramebuffer.attach(hdrTexture, GL_COLOR_ATTACHMENT0);
+    hdrFramebuffer.attach(static_cast<RenderbufferInterface>(hdrRenderbuffer), GL_DEPTH_ATTACHMENT);
+    hdrFramebuffer.isComplete();
+
+    shaderMSAA.use();
+    shaderMSAA.modifyUniform<int>("planeTexture", 0);
+    shaderMSAA.modifyUniform<int>("numSamples", samples);
     
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     camera.setMovementSpeed(3.0f);
@@ -90,11 +121,13 @@ int main() {
         processInput(window, camera, deltaTime);
         glfwPollEvents();
 
+        hdrFramebuffer.use(); // from now on we render to our own framebuffer
+
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         model = glm::rotate(glm::mat4(1.0f), t, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        t += deltaTime;
+        //t += deltaTime;
 
         shader.use();
         shader.modifyUniform<glm::mat4>("PVM", camera.getProjectionMatrix() * camera.getViewMatrix() * model);
@@ -102,6 +135,13 @@ int main() {
         vao.use();
         glDrawElements(GL_TRIANGLES, obj.getIndices().size(), obj.getType(), 0);
 
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
+        shaderMSAA.use();
+        vaoScreen.use();
+        hdrTexture.activate(0);
+        glViewport(0, 0, screenWidth, screenHeight);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glDrawElements(GL_TRIANGLES, screenIndices.size(), GL_UNSIGNED_BYTE, 0);
         // Swap the front and back buffers
         glfwSwapBuffers(window);
     }

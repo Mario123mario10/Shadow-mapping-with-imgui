@@ -23,7 +23,7 @@ void Framebuffer::attach(const T& object, unsigned int attachment) {
 }
 
 template<>
-void Framebuffer::attach<Renderbuffer>(const Renderbuffer& rbo, unsigned int attachment) {
+void Framebuffer::attach<RenderbufferInterface>(const RenderbufferInterface& rbo, unsigned int attachment) {
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, rbo.getId());
 }
 
@@ -49,5 +49,7 @@ void Framebuffer::isComplete() {
 	glBindFramebuffer(GL_FRAMEBUFFER, id);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "Framebuffer incomplete!!!" << std::endl;
+	else
+		std::cout << "Framebuffer complete!!!" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
