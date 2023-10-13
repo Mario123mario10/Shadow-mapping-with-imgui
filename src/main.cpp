@@ -13,15 +13,13 @@
 #include <texture.h>
 #include <framebuffer.h>
 #include <renderbuffer.h>
+#include <primitives.h>
+#include <object.h>
 // standard template libraries
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <iostream>
-
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-}
 
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
 
@@ -30,12 +28,13 @@ int main() {
         std::cerr << "Failed to initialize GLFW." << std::endl;
         return -1;
     }
-
+    
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Interpolated Triangle with Shaders", NULL, NULL);
+    int screenWidth = 3840, screenHeight = 2400;
+    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Interpolated Triangle with Shaders", NULL, NULL);
     if (!window) {
         std::cerr << "Failed to create GLFW window." << std::endl;
         glfwTerminate();
@@ -54,47 +53,30 @@ int main() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    int screenWidth, screenHeight;
-    glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
     glViewport(0, 0, screenWidth, screenHeight);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) -> void { glViewport(0, 0, width, height); });
     
-    FPSCamera camera(0.1f, 100.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
-    Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
-    Shader shaderMSAA(SHADERS_PATH "multisample_to_texture_2d.vert.glsl", SHADERS_PATH "multisample_to_texture_2d.frag.glsl");
-    ObjectLoader<unsigned char> obj(MODELS_PATH "cube.obj");
-
-    VertexArray vao;
-    VertexBuffer vbo;
-    IndexBuffer ibo;
-    vao.use();
-    vbo.use();
-    ibo.use();
-    ibo.parseElementData(obj.getIndices());
-    vbo.parseVertexData(obj.getVertices());
-    vao.setLayout<Vertex3D>();
-
-    std::vector<Vertex2D> screenVertices = {
+    const std::vector<Vertex2D> screenVertices = {
         { {-1.0f, -1.0f},   {0.0f, 0.0f} },
         { { 1.0f, -1.0f},   {1.0f, 0.0f} },
         { { 1.0f,  1.0f},   {1.0f, 1.0f} },
         { {-1.0f,  1.0f},   {0.0f, 1.0f} },
     };
 
-    std::vector<unsigned char> screenIndices = {
+    const std::vector<uint8_t> screenIndices = {
         0, 1, 2,
         2, 3, 0
     };
 
-    VertexArray vaoScreen;
-    VertexBuffer vboScreen;
-    IndexBuffer iboScreen;
-    vaoScreen.use();
-    vboScreen.use();
-    iboScreen.use();
-    vboScreen.parseVertexData(screenVertices);
-    iboScreen.parseElementData(screenIndices);
-    vaoScreen.setLayout<Vertex2D>();
+    FPSCamera camera(0.1f, 100.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
+    Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
+    Shader shaderMSAA(SHADERS_PATH "multisample_to_texture_2d.vert.glsl", SHADERS_PATH "multisample_to_texture_2d.frag.glsl");
+    ObjectLoader<uint8_t> obj(MODELS_PATH "cube.obj");
+
+    const Mesh<Vertex3D, uint8_t>& cubeMesh = obj.getMesh();
+    const Mesh<Vertex2D, uint8_t>& screenMesh = { screenVertices, screenIndices };
+    Object cube(cubeMesh);
+    Object screen(screenMesh);
 
     int samples = { 8 };
     Texture2DMultisample hdrTexture(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);
@@ -109,6 +91,8 @@ int main() {
     shaderMSAA.modifyUniform<int>("planeTexture", 0);
     shaderMSAA.modifyUniform<int>("numSamples", samples);
     
+    screen.addTexture(hdrTexture);
+    
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     camera.setMovementSpeed(3.0f);
     // Main loop
@@ -117,9 +101,10 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         float deltaTime = glfwGetTime() - last;
         last = glfwGetTime();
+        std::cout << 1.0f / deltaTime << std::endl;
 
-        processInput(window, camera, deltaTime);
         glfwPollEvents();
+        processInput(window, camera, deltaTime);
 
         hdrFramebuffer.use(); // from now on we render to our own framebuffer
 
@@ -131,17 +116,14 @@ int main() {
 
         shader.use();
         shader.modifyUniform<glm::mat4>("PVM", camera.getProjectionMatrix() * camera.getViewMatrix() * model);
-
-        vao.use();
-        glDrawElements(GL_TRIANGLES, obj.getIndices().size(), obj.getType(), 0);
+        cube.renderObject();
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
-        shaderMSAA.use();
-        vaoScreen.use();
-        hdrTexture.activate(0);
-        glViewport(0, 0, screenWidth, screenHeight);
         glClear(GL_DEPTH_BUFFER_BIT);
-        glDrawElements(GL_TRIANGLES, screenIndices.size(), GL_UNSIGNED_BYTE, 0);
+
+        shaderMSAA.use();
+        screen.renderObject();
+
         // Swap the front and back buffers
         glfwSwapBuffers(window);
     }
@@ -155,7 +137,7 @@ void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime)
 {
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
-    camera.updateEuler(xpos, ypos);
+    camera.updateEuler(xpos, ypos, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

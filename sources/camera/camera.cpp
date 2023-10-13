@@ -81,11 +81,11 @@ FPSCamera::FPSCamera(float near, float far, float aspectRatio, const glm::vec3& 
     yaw = -90.0f;
     pitch = 0.0f;
     movementSpeed = 1.0f;
-    mouseSpeed = 0.05f;
+    mouseSpeed = 2.0f;
 }
 
 
-void FPSCamera::updateEuler(float mousex, float mousey) {
+void FPSCamera::updateEuler(float mousex, float mousey, float deltaTime) {
     static bool firstTouch = false;
     float deltax = lastx - mousex, deltay = lasty - mousey;
     if (!firstTouch) {
@@ -93,8 +93,8 @@ void FPSCamera::updateEuler(float mousex, float mousey) {
         deltay = 0.0f;
         firstTouch = true;
     }
-    yaw -= deltax * mouseSpeed;
-    pitch += deltay * mouseSpeed;
+    yaw -= deltax * mouseSpeed * deltaTime;
+    pitch += deltay * mouseSpeed * deltaTime;
 
     if (pitch > 89.0f)
         pitch = 89.0f;
@@ -155,4 +155,8 @@ void FPSCamera::processKeyboard(Bindings binding, float deltaTime) {
 
 void FPSCamera::setMovementSpeed(float speed) {
     movementSpeed = speed;
+}
+
+void FPSCamera::setMouseSpeed(float speed) {
+    mouseSpeed = speed;
 }

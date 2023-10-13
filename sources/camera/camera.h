@@ -56,10 +56,11 @@ class FPSCamera : public PerspectiveCamera {
     float mouseSpeed;
 public:
     FPSCamera(float near, float far, float aspectRatio, const glm::vec3& position, float fovy);
-    void updateEuler(float mousex, float mousey);
+    void updateEuler(float mousex, float mousey, float deltaTime);
     void updateQuat(float mousex, float mousey);
     void processKeyboard(Bindings binding, float deltaTime);
     void setMovementSpeed(float speed);
+    void setMouseSpeed(float speed);
     // TODO from direction vectors of camera set angles properly
     void setDirection(const glm::vec3& direction) = delete;
     void setDirectionLookAt(const glm::vec3& lookAtPosition) = delete;
