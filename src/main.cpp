@@ -33,7 +33,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    int screenWidth = 3840, screenHeight = 2400;
+    int screenWidth = 1920, screenHeight = 1080;
     GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Interpolated Triangle with Shaders", NULL, NULL);
     if (!window) {
         std::cerr << "Failed to create GLFW window." << std::endl;
@@ -71,6 +71,7 @@ int main() {
     FPSCamera camera(0.1f, 100.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
     Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
     Shader shaderMSAA(SHADERS_PATH "multisample_to_texture_2d.vert.glsl", SHADERS_PATH "multisample_to_texture_2d.frag.glsl");
+    Shader lightCubeShader(SHADERS_PATH "lightcube.vert.glsl", SHADERS_PATH "lightcube.frag.glsl"); // light shader setup here because other shaders are here as well
     ObjectLoader<uint8_t> obj(MODELS_PATH "cube.obj");
 
     const Mesh<Vertex3D, uint8_t>& cubeMesh = obj.getMesh();
@@ -92,9 +93,22 @@ int main() {
     shaderMSAA.modifyUniform<int>("numSamples", samples);
     
     screen.addTexture(hdrTexture);
-    
+
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-    camera.setMovementSpeed(3.0f);
+
+
+    // set up light cube
+    ObjectLoader<uint8_t> lightObj = obj;
+    const Mesh<Vertex3D, uint8_t>& lightMesh = obj.getMesh();
+    Object lightCube(lightMesh);
+    // position and scaling
+    glm::vec3 lightPos = glm::vec3(3.5f, 0.7f, 3.0f);
+    glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), lightPos);
+    lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+
+
+    camera.setMovementSpeed(7.0f);
+    camera.setMouseSpeed(50.0f);
     // Main loop
     float t = 0.0f;
     float last = 0.0f;
@@ -116,7 +130,19 @@ int main() {
 
         shader.use();
         shader.modifyUniform<glm::mat4>("PVM", camera.getProjectionMatrix() * camera.getViewMatrix() * model);
+        // send some shit
+        shader.modifyUniform<glm::mat4>("model", model);
+        shader.modifyUniform<glm::mat4>("invModel", glm::inverse(model));
+
+        shader.modifyUniform<glm::vec3>("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+        shader.modifyUniform<glm::vec3>("lightPos", lightPos);
+        shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
         cube.renderObject();
+        
+        // for the light cube
+        lightCubeShader.use();
+        lightCubeShader.modifyUniform<glm::mat4>("PVM", camera.getProjectionMatrix() * camera.getViewMatrix() * lightModel);
+        lightCube.renderObject();
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
         glClear(GL_DEPTH_BUFFER_BIT);
