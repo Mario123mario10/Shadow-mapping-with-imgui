@@ -23,6 +23,24 @@
 
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
 
+template<typename T>
+std::shared_ptr<VertexBuffer> createVertexBuffer(std::vector<T> data, bool instanced = false) {
+    std::shared_ptr<VertexBuffer> vbo(new VertexBuffer);
+    vbo->use();
+    vbo->parseData(data);
+    VertexBufferLayout& layout = vbo->getLayout();
+    layout.addLayoutElement<T>(1, instanced);
+    return vbo;
+}
+
+template<typename T>
+std::shared_ptr<IndexBuffer> createIndexBuffer(std::vector<T> data) {
+    std::shared_ptr<IndexBuffer> ibo(new IndexBuffer);
+    ibo->use();
+    ibo->parseElementData(data);
+    return ibo;
+}
+
 int main() {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW." << std::endl;
@@ -33,7 +51,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    int screenWidth = 3840, screenHeight = 2400;
+    int screenWidth = 1920, screenHeight = 1080;
     GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Interpolated Triangle with Shaders", NULL, NULL);
     if (!window) {
         std::cerr << "Failed to create GLFW window." << std::endl;
@@ -68,24 +86,44 @@ int main() {
         2, 3, 0
     };
 
+    const int instances = { 4 };
+    std::vector<glm::mat4> models(4);
+    models[0] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 7.0f));
+    models[1] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -7.0f));
+    models[2] = glm::translate(glm::mat4(1.0f), glm::vec3(7.0f, 0.0f, 0.0f));
+    models[3] = glm::translate(glm::mat4(1.0f), glm::vec3(-7.0f, 0.0f, 7.0f));
+
     FPSCamera camera(0.1f, 100.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
     Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
     Shader shaderMSAA(SHADERS_PATH "multisample_to_texture_2d.vert.glsl", SHADERS_PATH "multisample_to_texture_2d.frag.glsl");
-    ObjectLoader<uint8_t> obj(MODELS_PATH "cube.obj");
+    ObjectLoader<uint8_t> obj(MODELS_PATH "cube.obj");  // only loads mesh from .obj file
 
-    const Mesh<Vertex3D, uint8_t>& cubeMesh = obj.getMesh();
-    const Mesh<Vertex2D, uint8_t>& screenMesh = { screenVertices, screenIndices };
-    Object cube(cubeMesh);
-    Object screen(screenMesh);
+    const Mesh<Vertex3D, uint8_t>& cubeMesh = obj.getMesh();    // we can get mesh from object
+    const Mesh<Vertex2D, uint8_t>& screenMesh = { screenVertices, screenIndices };  // also we can create mesh from our own vectors
 
-    int samples = { 8 };
-    Texture2DMultisample hdrTexture(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);
-    RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT32F, samples);
-    Framebuffer hdrFramebuffer({ GL_COLOR_ATTACHMENT0 }, GL_NONE);
+    auto meshVbo = createVertexBuffer(cubeMesh.vertices); 
+    auto meshIbo = createIndexBuffer(cubeMesh.indices);
+    ObjectInstanced cubes(instances);
+    cubes.addVertexBuffer(meshVbo); // first vertex buffer which holds mesh of the cube
+    cubes.addVertexBuffer(createVertexBuffer(models, true));    // second vertex buffer which holds model matrices of our cubes held in "cubes" variable
+    cubes.attachIndexBuffer(meshIbo);
+
+    Object cube;    // regular cube object
+    cube.addVertexBuffer(meshVbo);
+    cube.attachIndexBuffer(createIndexBuffer(cubeMesh.indices));
+
+    Object screen;
+    screen.addVertexBuffer(createVertexBuffer(screenMesh.vertices));
+    screen.attachIndexBuffer(createIndexBuffer(screenMesh.indices));
+
+    int samples = { 4 };
+    std::shared_ptr<Texture2DMultisample> hdrTexture = std::make_shared<Texture2DMultisample>(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);   // here we store colours of each fragment/pixel
+    RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT32F, samples);     // here we store depths of each fragment/pixel
+    Framebuffer hdrFramebuffer({ GL_COLOR_ATTACHMENT0 }, GL_NONE); // framebuffer requires buffers to store colour and depth...
     hdrFramebuffer.use();
-    hdrFramebuffer.attach(hdrTexture, GL_COLOR_ATTACHMENT0);
-    hdrFramebuffer.attach(static_cast<RenderbufferInterface>(hdrRenderbuffer), GL_DEPTH_ATTACHMENT);
-    hdrFramebuffer.isComplete();
+    hdrFramebuffer.attach(*hdrTexture, GL_COLOR_ATTACHMENT0);   // we pass colour storage
+    hdrFramebuffer.attach(static_cast<RenderbufferInterface>(hdrRenderbuffer), GL_DEPTH_ATTACHMENT); // we pass depth storage
+    hdrFramebuffer.isComplete();    // check if everything is fine
 
     shaderMSAA.use();
     shaderMSAA.modifyUniform<int>("planeTexture", 0);
@@ -95,35 +133,39 @@ int main() {
     
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     camera.setMovementSpeed(3.0f);
+    camera.setMouseSpeed(0.1f);
     // Main loop
     float t = 0.0f;
     float last = 0.0f;
     while (!glfwWindowShouldClose(window)) {
         float deltaTime = glfwGetTime() - last;
         last = glfwGetTime();
-        std::cout << 1.0f / deltaTime << std::endl;
-
+        //std::cout << 1.0f / deltaTime << std::endl;
+    
         glfwPollEvents();
         processInput(window, camera, deltaTime);
-
+    
         hdrFramebuffer.use(); // from now on we render to our own framebuffer
-
+    
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    
         model = glm::rotate(glm::mat4(1.0f), t, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         //t += deltaTime;
-
+    
         shader.use();
         shader.modifyUniform<glm::mat4>("PVM", camera.getProjectionMatrix() * camera.getViewMatrix() * model);
-        cube.renderObject();
-
+        shader.modifyUniform<glm::mat4>("PV", camera.getProjectionMatrix() * camera.getViewMatrix());
+        cubes.render();
+        // change code in shader so that this call draws noramlly the cube
+        // cube.render();
+    
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
         glClear(GL_DEPTH_BUFFER_BIT);
-
+    
         shaderMSAA.use();
-        screen.renderObject();
-
+        screen.render();
+    
         // Swap the front and back buffers
         glfwSwapBuffers(window);
     }
@@ -137,7 +179,7 @@ void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime)
 {
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
-    camera.updateEuler(xpos, ypos, deltaTime);
+    camera.updateEuler(xpos, ypos);
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

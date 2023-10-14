@@ -1,28 +1,54 @@
 #include <glad/glad.h>
 
 #include "vertex_buffer.h"
-
+#include <iostream>
 
 template<typename T>
-void VertexBufferLayout::addLayoutElement(int count) {
+void VertexBufferLayout::addLayoutElement(int count, bool instanced) {
     static_assert(false, "Wrong type");
 }
 
 template<>
-void VertexBufferLayout::addLayoutElement<float>(int count) {
-    elements.push_back({ GL_FLOAT, sizeof(float), count, GL_FALSE });
+void VertexBufferLayout::addLayoutElement<char>(int count, bool instanced) {
+    elements.push_back({ GL_BYTE, sizeof(char), count, GL_TRUE, instanced });
+    stride += count * sizeof(char);
+}
+
+template<>
+void VertexBufferLayout::addLayoutElement<float>(int count, bool instanced) {
+    elements.push_back({ GL_FLOAT, sizeof(float), count, GL_FALSE, instanced });
     stride += count * sizeof(float);
 }
 
 template<>
-void VertexBufferLayout::addLayoutElement<char>(int count) {
-    elements.push_back({ GL_BYTE, sizeof(char), count, GL_TRUE });
-    stride += count * sizeof(char);
+void VertexBufferLayout::addLayoutElement<Vertex3D>(int count, bool instanced) {
+    addLayoutElement<float>(3, instanced);
+    addLayoutElement<float>(2, instanced);
+    addLayoutElement<float>(3, instanced);
+}                            
+
+template<>
+void VertexBufferLayout::addLayoutElement<Vertex2D>(int count, bool instanced) {
+    addLayoutElement<float>(2, instanced);
+    addLayoutElement<float>(2, instanced);
+}
+
+template<>
+void VertexBufferLayout::addLayoutElement<glm::mat4>(int count, bool instanced) {
+    addLayoutElement<float>(4, instanced);
+    addLayoutElement<float>(4, instanced);
+    addLayoutElement<float>(4, instanced);
+    addLayoutElement<float>(4, instanced);
 }
 
 const std::vector<VertexBufferElement>& VertexBufferLayout::getLayoutElements() const {
     return elements;
 }
+
+VertexBufferLayout& VertexBuffer::getLayout() {
+    return layout;
+}
+
 
 // do not use it
 void VertexBuffer::parseRawData(int size, const void* data) {
@@ -38,7 +64,7 @@ VertexBuffer::VertexBuffer() {
 }
 
 VertexBuffer::~VertexBuffer() {
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    std::cout << "DESTROYED" << std::endl;
     glDeleteBuffers(1, &id);
 }
 

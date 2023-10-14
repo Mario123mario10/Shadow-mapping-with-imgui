@@ -85,7 +85,7 @@ FPSCamera::FPSCamera(float near, float far, float aspectRatio, const glm::vec3& 
 }
 
 
-void FPSCamera::updateEuler(float mousex, float mousey, float deltaTime) {
+void FPSCamera::updateEuler(float mousex, float mousey) {
     static bool firstTouch = false;
     float deltax = lastx - mousex, deltay = lasty - mousey;
     if (!firstTouch) {
@@ -93,8 +93,8 @@ void FPSCamera::updateEuler(float mousex, float mousey, float deltaTime) {
         deltay = 0.0f;
         firstTouch = true;
     }
-    yaw -= deltax * mouseSpeed * deltaTime;
-    pitch += deltay * mouseSpeed * deltaTime;
+    yaw -= deltax * mouseSpeed;
+    pitch += deltay * mouseSpeed;
 
     if (pitch > 89.0f)
         pitch = 89.0f;

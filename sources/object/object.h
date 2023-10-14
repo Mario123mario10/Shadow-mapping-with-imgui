@@ -1,39 +1,36 @@
-#include <vertex_array.h>
-#include <index_buffer.h>
 #pragma once
-
 #include <shader.h>
 #include <vertex_array.h>
+#include <vertex_buffer.h>
 #include <index_buffer.h>
 #include <primitives.h>
 #include <texture.h>
 
 #include <memory>
 
-class Object {
+class ObjectInterface {
+protected:
     VertexArray vao;
-    VertexBuffer vbo;
-    IndexBuffer ibo;
-    std::vector<std::shared_ptr<const Texture>> textures;
-    int meshSize;
-    unsigned int type;
+    std::shared_ptr<IndexBuffer> ibo;
+    std::vector<std::shared_ptr<VertexBuffer>> vbos;
+    std::vector<std::shared_ptr<Texture>> textures;
 public:
-    template<typename VertexType, typename IndicesType>
-    Object(const Mesh<VertexType, IndicesType>& mesh);
-    void addTexture(const Texture& texture);
-    void renderObject();
+    void addVertexBuffer(std::shared_ptr<VertexBuffer> vbo);
+    void attachIndexBuffer(std::shared_ptr<IndexBuffer> ibo);
+    void addTexture(std::shared_ptr<Texture> texture);
+    virtual void render() =0;
+    virtual ~ObjectInterface() = default;
 private:
-    template<typename IndicesType>
-    unsigned int setType() const;
 };
 
-template<typename VerticesType, typename IndicesType>
-Object::Object(const Mesh<VerticesType, IndicesType>& mesh)
-    : meshSize(mesh.indices.size()), type(setType<IndicesType>()) {
-    vao.use();
-    vbo.use();
-    ibo.use();
-    vbo.parseVertexData(mesh.vertices);
-    ibo.parseElementData(mesh.indices);
-    vao.setLayout<VerticesType>();
-}
+class Object : public ObjectInterface {
+public:
+    virtual void render() override;
+};
+
+class ObjectInstanced : public ObjectInterface {
+    int amount;
+public:
+    ObjectInstanced(int amount) : amount(amount) {};
+    virtual void render() override;
+};

@@ -56,7 +56,7 @@ class FPSCamera : public PerspectiveCamera {
     float mouseSpeed;
 public:
     FPSCamera(float near, float far, float aspectRatio, const glm::vec3& position, float fovy);
-    void updateEuler(float mousex, float mousey, float deltaTime);
+    void updateEuler(float mousex, float mousey);
     void updateQuat(float mousex, float mousey);
     void processKeyboard(Bindings binding, float deltaTime);
     void setMovementSpeed(float speed);

@@ -4,11 +4,11 @@
 
 class VertexArray {
 	unsigned int id;
+	unsigned int attribIndex;
 public:
 	VertexArray();
 	~VertexArray();
-	template<typename T>
-	void setLayout();
+	void addVertexBufferLayout(const VertexBufferLayout& layout);
 	void use() const;
 	void unUse() const;
 };
