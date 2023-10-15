@@ -18,13 +18,11 @@ Renderbuffer::Renderbuffer(int width, int height, unsigned int internalFormat)
 	: RenderbufferInterface(), width(width), height(height) {
 	glBindRenderbuffer(GL_RENDERBUFFER, id);
 	glRenderbufferStorage(GL_RENDERBUFFER, internalFormat, width, height);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
 RenderbufferMultisample::RenderbufferMultisample(int width, int height, unsigned int internalFormat, unsigned int samples)
 	: RenderbufferInterface(), width(width), height(height), samples(samples) {
 	glBindRenderbuffer(GL_RENDERBUFFER, id);
 	glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, internalFormat, width, height);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
