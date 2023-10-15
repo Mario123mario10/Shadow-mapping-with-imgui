@@ -135,7 +135,8 @@ int main() {
     shaderMSAA.use();
     shaderMSAA.modifyUniform<int>("planeTexture", 0);
     shaderMSAA.modifyUniform<int>("numSamples", samples);
-    shaderMSAA.modifyUniform<float>("gamma", 1.0f);     // originally 2.2 but adjust this value so that it looks good
+    shaderMSAA.modifyUniform<float>("gamma", 2.2f);     // gamma correction - originally 2.2 but adjust this value so that it looks good
+    shaderMSAA.modifyUniform<float>("exposure", 0.3f);     // High Dynamic Range - adjust this value so that it looks good
     
     screen.addTexture(hdrTexture);
 
@@ -143,7 +144,7 @@ int main() {
     glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
 
     camera.setMovementSpeed(7.0f);
-    camera.setMouseSpeed(0.4f);
+    camera.setMouseSpeed(0.05f);
 
     shader.use();
     shader.modifyUniform<glm::vec3>("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
