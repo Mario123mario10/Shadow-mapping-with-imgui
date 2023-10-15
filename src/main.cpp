@@ -135,6 +135,7 @@ int main() {
     shaderMSAA.use();
     shaderMSAA.modifyUniform<int>("planeTexture", 0);
     shaderMSAA.modifyUniform<int>("numSamples", samples);
+    shaderMSAA.modifyUniform<float>("gamma", 1.0f);     // originally 2.2 but adjust this value so that it looks good
     
     screen.addTexture(hdrTexture);
 
