@@ -19,6 +19,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <random>
 #include <iostream>
 
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
@@ -86,14 +87,18 @@ int main() {
         2, 3, 0
     };
 
-    const int instances = { 4 };
-    std::vector<glm::mat4> models(4);
-    models[0] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 7.0f));
-    models[1] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -7.0f));
-    models[2] = glm::translate(glm::mat4(1.0f), glm::vec3(7.0f, 0.0f, 0.0f));
-    models[3] = glm::translate(glm::mat4(1.0f), glm::vec3(-7.0f, 0.0f, 7.0f));
+    std::random_device rd;  
+    std::mt19937 gen(rd()); 
+    std::uniform_real_distribution<> dis(-100.0f, 100.0f);
 
-    FPSCamera camera(0.1f, 100.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
+    const int instances = { 10000 };
+    std::vector<glm::mat4> models(instances);
+
+    for (auto& model : models) {
+        model = glm::translate(glm::mat4(1.0f), glm::vec3(dis(gen), dis(gen), dis(gen)));
+    }
+
+    FPSCamera camera(0.1f, 150.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
     Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
     Shader shaderMSAA(SHADERS_PATH "multisample_to_texture_2d.vert.glsl", SHADERS_PATH "multisample_to_texture_2d.frag.glsl");
     ObjectLoader<uint8_t> obj(MODELS_PATH "cube.obj");  // only loads mesh from .obj file
@@ -101,15 +106,16 @@ int main() {
     const Mesh<Vertex3D, uint8_t>& cubeMesh = obj.getMesh();    // we can get mesh from object
     const Mesh<Vertex2D, uint8_t>& screenMesh = { screenVertices, screenIndices };  // also we can create mesh from our own vectors
 
-    auto meshVbo = createVertexBuffer(cubeMesh.vertices); 
-    auto meshIbo = createIndexBuffer(cubeMesh.indices);
+    auto cubeVbo = createVertexBuffer(cubeMesh.vertices); 
+    auto cubeIbo = createIndexBuffer(cubeMesh.indices);
+
     ObjectInstanced cubes(instances);
-    cubes.addVertexBuffer(meshVbo); // first vertex buffer which holds mesh of the cube
-    cubes.addVertexBuffer(createVertexBuffer(models, true));    // second vertex buffer which holds model matrices of our cubes held in "cubes" variable
-    cubes.attachIndexBuffer(meshIbo);
+    cubes.addVertexBuffer(cubeVbo); // first vertex buffer which stores mesh of the cube
+    cubes.addVertexBuffer(createVertexBuffer(models, true));    // second vertex buffer which stores model matrices of our cubes held in "cubes" variable
+    cubes.attachIndexBuffer(cubeIbo);
 
     Object cube;    // regular cube object
-    cube.addVertexBuffer(meshVbo);
+    cube.addVertexBuffer(cubeVbo);
     cube.attachIndexBuffer(createIndexBuffer(cubeMesh.indices));
 
     Object screen;
