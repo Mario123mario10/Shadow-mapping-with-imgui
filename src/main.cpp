@@ -90,12 +90,14 @@ int main() {
     std::random_device rd;  
     std::mt19937 gen(rd()); 
     std::uniform_real_distribution<> dis(-100.0f, 100.0f);
+    std::uniform_int_distribution<int> binDis(0, 1);
 
     const int instances = { 10000 };
     std::vector<glm::mat4> models(instances);
 
     for (auto& model : models) {
         model = glm::translate(glm::mat4(1.0f), glm::vec3(dis(gen), dis(gen), dis(gen)));
+        model = glm::rotate(model, glm::radians(static_cast<float>(dis(gen))), glm::vec3(binDis(gen), binDis(gen), binDis(gen)));
     }
 
     FPSCamera camera(0.1f, 150.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
@@ -140,8 +142,9 @@ int main() {
     
     screen.addTexture(hdrTexture);
 
-    glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 1.0f);
+    glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+
 
     camera.setMovementSpeed(7.0f);
     camera.setMouseSpeed(0.05f);
@@ -162,7 +165,7 @@ int main() {
     
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+
         // draw instanced cubes
         shader.use();
         shader.modifyUniform<glm::mat4>("PV", camera.getProjectionMatrix() * camera.getViewMatrix());
