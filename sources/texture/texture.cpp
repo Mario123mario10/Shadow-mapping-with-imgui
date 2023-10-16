@@ -36,7 +36,7 @@ int Texture2DMultisample::getSamplesNumber() const {
     return samples;
 }
 
-Texture2D::Texture2D(int width, int height, int internalFormat) : 
+Texture2D::Texture2D(int width, int height, int internalFormat, int textureLevel = 1) : 
     Texture(GL_TEXTURE_2D), width(width), height(height), internalFormat(internalFormat) {
     glBindTexture(GL_TEXTURE_2D, id);
     // Add subvariants if necessary
@@ -45,8 +45,8 @@ Texture2D::Texture2D(int width, int height, int internalFormat) :
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
-
+    // Assumed one texture level
+    glTextureStorage2D(GL_TEXTURE_2D, textureLevel, internalFormat, width, height);
 }
 
 TextureCubeMap::TextureCubeMap() : Texture(GL_TEXTURE_CUBE_MAP) {
