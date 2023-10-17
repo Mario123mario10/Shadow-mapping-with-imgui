@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+#include <string>
 
 class Texture {
 protected:
@@ -31,5 +33,6 @@ public:
 // Mariusz
 class TextureCubeMap : public Texture {
 public:
-	TextureCubeMap();
+	TextureCubeMap(const std::vector<std::string>& textureFilenames);
+	//void load_faces(std::string texture_path, std::vector<std::string> texture_filenames);
 };

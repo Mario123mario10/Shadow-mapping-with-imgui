@@ -47,7 +47,7 @@ int main() {
         std::cerr << "Failed to initialize GLFW." << std::endl;
         return -1;
     }
-    
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -74,7 +74,7 @@ int main() {
 
     glViewport(0, 0, screenWidth, screenHeight);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) -> void { glViewport(0, 0, width, height); });
-    
+
     const std::vector<Vertex2D> screenVertices = {
         { {-1.0f, -1.0f},   {0.0f, 0.0f} },
         { { 1.0f, -1.0f},   {1.0f, 0.0f} },
@@ -87,8 +87,17 @@ int main() {
         2, 3, 0
     };
 
-    std::random_device rd;  
-    std::mt19937 gen(rd()); 
+    std::vector<std::string> texture_filenames = {
+        "right.jpg",
+        "left.jpg",
+        "top.jpg",
+        "bottom.jpg",
+        "front.jpg",
+        "back.jpg"
+    };
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(-100.0f, 100.0f);
 
     const int instances = { 10000 };
@@ -102,12 +111,14 @@ int main() {
     Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
     Shader lightCubeShader(SHADERS_PATH "lightcube.vert.glsl", SHADERS_PATH "lightcube.frag.glsl"); // light shader setup here because other shaders are here as well
     Shader shaderMSAA(SHADERS_PATH "multisample_to_texture_2d.vert.glsl", SHADERS_PATH "multisample_to_texture_2d.frag.glsl");
+    Shader shaderCubeMap(SHADERS_PATH "cubemap.vert.glsl", SHADERS_PATH "cubemap.frag.glsl");
     ObjectLoader<uint8_t> obj(MODELS_PATH "cube.obj");  // only loads mesh from .obj file
+
 
     const Mesh<Vertex3D, uint8_t>& cubeMesh = obj.getMesh();    // we can get mesh from object
     const Mesh<Vertex2D, uint8_t>& screenMesh = { screenVertices, screenIndices };  // also we can create mesh from our own vectors
 
-    auto cubeVbo = createVertexBuffer(cubeMesh.vertices); 
+    auto cubeVbo = createVertexBuffer(cubeMesh.vertices);
     auto cubeIbo = createIndexBuffer(cubeMesh.indices);
 
     ObjectInstanced cubes(instances);
@@ -117,12 +128,18 @@ int main() {
 
     Object cube;    // regular cube object
     cube.addVertexBuffer(cubeVbo);
-    cube.attachIndexBuffer(createIndexBuffer(cubeMesh.indices));
+    cube.attachIndexBuffer(cubeIbo);
 
     Object screen;  // screen plane for postprocessing
     screen.addVertexBuffer(createVertexBuffer(screenMesh.vertices));
     screen.attachIndexBuffer(createIndexBuffer(screenMesh.indices));
 
+    Object cubemap;
+    cubemap.addVertexBuffer(cubeVbo);
+    cubemap.attachIndexBuffer(cubeIbo);
+
+
+    std::shared_ptr<TextureCubeMap> textureCubeMap(new TextureCubeMap(texture_filenames));
     int samples = { 4 };
     std::shared_ptr<Texture2DMultisample> hdrTexture = std::make_shared<Texture2DMultisample>(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);   // here we store colours of each fragment/pixel
     RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);     // here we store depths of each fragment/pixel
@@ -137,7 +154,12 @@ int main() {
     shaderMSAA.modifyUniform<int>("numSamples", samples);
     shaderMSAA.modifyUniform<float>("gamma", 2.2f);     // gamma correction - originally 2.2 but adjust this value so that it looks good
     shaderMSAA.modifyUniform<float>("exposure", 0.3f);     // High Dynamic Range - adjust this value so that it looks good
-    
+
+    shaderCubeMap.use();
+    shaderCubeMap.modifyUniform<int>("cubemap", 0);
+    shaderCubeMap.modifyUniform<glm::mat4>("projection", camera.getProjectionMatrix());
+    cubemap.addTexture(textureCubeMap);
+
     screen.addTexture(hdrTexture);
 
     glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 1.0f);
@@ -154,32 +176,39 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         float deltaTime = glfwGetTime() - last;
         last = glfwGetTime();
-    
+
         glfwPollEvents();
         processInput(window, camera, deltaTime);
-    
+
         hdrFramebuffer.use(); // from now on we render to our own framebuffer
-    
+
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+
         // draw instanced cubes
         shader.use();
         shader.modifyUniform<glm::mat4>("PV", camera.getProjectionMatrix() * camera.getViewMatrix());
         shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
         cubes.render();
-        
+
         // draw light cube
         lightCubeShader.use();
         lightCubeShader.modifyUniform<glm::mat4>("PVM", camera.getProjectionMatrix() * camera.getViewMatrix() * lightModel);
         cube.render();
 
+        shaderCubeMap.use();
+        shaderCubeMap.modifyUniform<glm::mat4>("view", glm::mat4(glm::mat3(camera.getViewMatrix())));
+        glDepthFunc(GL_LEQUAL);
+        glCullFace(GL_FRONT);
+        cubemap.render();
+        glCullFace(GL_BACK);
+
         // postprocessing
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
-        glClear(GL_DEPTH_BUFFER_BIT);
         shaderMSAA.use();
         screen.render();
-    
+        glDepthFunc(GL_LESS);
+
         // Swap the front and back buffers
         glfwSwapBuffers(window);
     }
