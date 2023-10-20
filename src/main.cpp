@@ -87,7 +87,7 @@ int main() {
         2, 3, 0
     };
 
-    std::vector<std::string> texture_filenames = {
+    std::vector<std::string> textureFilenames = {
         "right.jpg",
         "left.jpg",
         "top.jpg",
