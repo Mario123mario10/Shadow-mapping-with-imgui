@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+#include <string>
+
 class Texture {
 protected:
 	unsigned int id;
@@ -24,8 +27,15 @@ public:
 
 // Olek
 class Texture2D : public Texture {
+	int width;
+	int height;
+	int internalFormat;
+	std::unique_ptr<unsigned char> textureImage;
 public:
-	Texture2D();
+	Texture2D(int width, int height, int internalFormat, int textureLevel = 1);
+	~Texture2D();
+	//void loadImage(std::string imagePath);
+	static std::shared_ptr<Texture2D> fromImage(std::string imagePath);
 };
 
 // Mariusz

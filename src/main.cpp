@@ -2,6 +2,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image/stb_image.h>
+
 // our libraries
 #include <shader.h>
 #include <vertex_buffer.h>
@@ -21,6 +24,7 @@
 #include <string>
 #include <random>
 #include <iostream>
+#include <memory>
 
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
 
@@ -115,9 +119,29 @@ int main() {
     cubes.addVertexBuffer(createVertexBuffer(models, true));    // second vertex buffer which stores model matrices of our cubes held in "cubes" variable
     cubes.attachIndexBuffer(cubeIbo);
 
+
     Object cube;    // regular cube object
     cube.addVertexBuffer(cubeVbo);
     cube.attachIndexBuffer(createIndexBuffer(cubeMesh.indices));
+//
+//    int textureWidth, textureHeight, nrChannels;
+//    unsigned char* data = stbi_load("D:/PROGRAMOWANIE/GKOM/resources/textures/Lukasz-Dabala.jpg", &textureWidth, &textureHeight, &nrChannels, 0);
+//    std::shared_ptr<Texture2D> cubeTexture = std::make_shared<Texture2D>(textureWidth, textureHeight, GL_R11F_G11F_B10F);   
+//    if (data)
+//    {
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+//        glGenerateMipmap(GL_TEXTURE_2D);
+//    }
+//    else
+//    {
+//        std::cout << "Failed to load texture" << std::endl;
+//    }
+//    stbi_image_free(data);
+
+    std::shared_ptr<Texture2D> cubeTexture = Texture2D::fromImage("D:/PROGRAMOWANIE/GKOM/resources/textures/Lukasz-Dabala.jpg");
+    
+
+        
 
     Object screen;  // screen plane for postprocessing
     screen.addVertexBuffer(createVertexBuffer(screenMesh.vertices));
@@ -140,6 +164,12 @@ int main() {
     
     screen.addTexture(hdrTexture);
 
+
+
+	cubes.addTexture(cubeTexture);
+    
+
+
     glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 1.0f);
     glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
 
@@ -149,6 +179,7 @@ int main() {
     shader.use();
     shader.modifyUniform<glm::vec3>("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
     shader.modifyUniform<glm::vec3>("lightPos", lightPos);
+    shader.modifyUniform<int>("cubeTexture", 0);
 
     float last = 0.0f;
     while (!glfwWindowShouldClose(window)) {
@@ -167,16 +198,17 @@ int main() {
         shader.use();
         shader.modifyUniform<glm::mat4>("PV", camera.getProjectionMatrix() * camera.getViewMatrix());
         shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
+
         cubes.render();
         
         // draw light cube
         lightCubeShader.use();
         lightCubeShader.modifyUniform<glm::mat4>("PVM", camera.getProjectionMatrix() * camera.getViewMatrix() * lightModel);
         cube.render();
-
         // postprocessing
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
         glClear(GL_DEPTH_BUFFER_BIT);
+        
         shaderMSAA.use();
         screen.render();
     

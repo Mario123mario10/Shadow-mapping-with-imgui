@@ -1,8 +1,13 @@
 #include "texture.h"
 
 #include <glad/glad.h>
+#include "../../thirdparty/stb_image/include/stb_image/stb_image.h"
+//#define STB_IMAGE_IMPLEMENTATION
+//#include <stb_image/stb_image.h>
 
 #include <iostream>
+#include <memory>
+#include <string>
 
 Texture::Texture(unsigned int type) : type(type) {
 	glGenTextures(1, &id);
@@ -36,18 +41,38 @@ int Texture2DMultisample::getSamplesNumber() const {
     return samples;
 }
 
-Texture2D::Texture2D(int width, int height, int internalFormat, int textureLevel = 1) : 
+// Assumed one texture level
+Texture2D::Texture2D(int width, int height, int internalFormat, int textureLevel) : 
     Texture(GL_TEXTURE_2D), width(width), height(height), internalFormat(internalFormat) {
     glBindTexture(GL_TEXTURE_2D, id);
     // Add subvariants if necessary
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    // Assumed one texture level
     glTextureStorage2D(GL_TEXTURE_2D, textureLevel, internalFormat, width, height);
 }
+
+Texture2D::~Texture2D() {
+    stbi_image_free(textureImage.get());
+}
+
+std::shared_ptr<Texture2D> Texture2D::fromImage(const std::string imagePath) {
+    int textureWidth, textureHeight, nrChannels;
+    unsigned char* loadedData = stbi_load(imagePath.c_str(), &textureWidth, &textureHeight, &nrChannels, 0);
+    std::unique_ptr<unsigned char> loadedImageData(loadedData);
+    std::shared_ptr<Texture2D> createdTexture = std::make_shared<Texture2D>(textureWidth, textureHeight, GL_R11F_G11F_B10F);   
+    if (loadedData)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, loadedData);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    { std::cout << "Failed to load texture" << std::endl; }
+    return createdTexture;
+}
+
 
 TextureCubeMap::TextureCubeMap() : Texture(GL_TEXTURE_CUBE_MAP) {
 
