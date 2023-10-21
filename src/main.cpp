@@ -26,6 +26,9 @@
 #include <iostream>
 #include <memory>
 
+#define TEXTURE_PATH "./resources/textures/"
+
+
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
 
 template<typename T>
@@ -123,22 +126,8 @@ int main() {
     Object cube;    // regular cube object
     cube.addVertexBuffer(cubeVbo);
     cube.attachIndexBuffer(createIndexBuffer(cubeMesh.indices));
-//
-//    int textureWidth, textureHeight, nrChannels;
-//    unsigned char* data = stbi_load("D:/PROGRAMOWANIE/GKOM/resources/textures/Lukasz-Dabala.jpg", &textureWidth, &textureHeight, &nrChannels, 0);
-//    std::shared_ptr<Texture2D> cubeTexture = std::make_shared<Texture2D>(textureWidth, textureHeight, GL_R11F_G11F_B10F);   
-//    if (data)
-//    {
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-//        glGenerateMipmap(GL_TEXTURE_2D);
-//    }
-//    else
-//    {
-//        std::cout << "Failed to load texture" << std::endl;
-//    }
-//    stbi_image_free(data);
-
-    std::shared_ptr<Texture2D> cubeTexture = Texture2D::fromImage("D:/PROGRAMOWANIE/GKOM/resources/textures/Lukasz-Dabala.jpg");
+    
+    std::shared_ptr<Texture2D> cubeTexture = Texture2D::fromImage(TEXTURE_PATH "Lukasz-Dabala.jpg");
     
 
         
