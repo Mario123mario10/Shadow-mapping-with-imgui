@@ -1,3 +1,5 @@
+set(CMAKE_CXX_STANDARD 23)
+
 # Add the shader source files to the ShaderLibrary target
 add_library(IndexBuffer index_buffer.cpp index_buffer.h)
 

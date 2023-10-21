@@ -94,6 +94,11 @@ void Shader::modifyUniform<glm::mat4>(const std::string& name, const glm::mat4& 
 }
 
 template<>
+void Shader::modifyUniform<glm::mat3>(const std::string& name, const glm::mat3& matrix) const {
+    glUniformMatrix3fv(glGetUniformLocation(program, name.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
+}
+
+template<>
 void Shader::modifyUniform<glm::vec3>(const std::string& name, const glm::vec3& vector) const {
     glUniform3f(glGetUniformLocation(program, name.c_str()), vector.x, vector.y, vector.z);
 }
