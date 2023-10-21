@@ -54,23 +54,38 @@ Texture2D::Texture2D(int width, int height, int internalFormat, int textureLevel
     glTextureStorage2D(GL_TEXTURE_2D, textureLevel, internalFormat, width, height);
 }
 
-Texture2D::~Texture2D() {
-    stbi_image_free(textureImage.get());
-}
+
+//Texture2D::~Texture2D() {
+//    stbi_image_free(textureImage.get());
+//}
+
+
+
 
 std::shared_ptr<Texture2D> Texture2D::fromImage(const std::string imagePath) {
     int textureWidth, textureHeight, nrChannels;
     unsigned char* loadedData = stbi_load(imagePath.c_str(), &textureWidth, &textureHeight, &nrChannels, 0);
-    std::unique_ptr<unsigned char> loadedImageData(loadedData);
-    std::shared_ptr<Texture2D> createdTexture = std::make_shared<Texture2D>(textureWidth, textureHeight, GL_R11F_G11F_B10F);   
-    if (loadedData)
+    std::shared_ptr<unsigned char> loadedImageData(loadedData);
+    std::shared_ptr<Texture2D> createdTexture = std::make_shared<Texture2D>(textureWidth, textureHeight, GL_R11F_G11F_B10F);
+    createdTexture->setTextureImage(std::move(loadedImageData));
+    return createdTexture;
+}
+
+
+void Texture2D::setTextureImage(std::shared_ptr<unsigned char> textureImage) {
+    this->textureImage = textureImage;
+    initialiseTexture();
+}
+
+void Texture2D::initialiseTexture() {
+    if (this->textureImage)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, loadedData);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, this->textureImage.get());
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
     { std::cout << "Failed to load texture" << std::endl; }
-    return createdTexture;
+
 }
 
 

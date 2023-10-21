@@ -26,7 +26,6 @@
 #include <iostream>
 #include <memory>
 
-#define TEXTURE_PATH "./resources/textures/"
 
 
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
@@ -126,11 +125,8 @@ int main() {
     Object cube;    // regular cube object
     cube.addVertexBuffer(cubeVbo);
     cube.attachIndexBuffer(createIndexBuffer(cubeMesh.indices));
-    
-    std::shared_ptr<Texture2D> cubeTexture = Texture2D::fromImage(TEXTURE_PATH "Lukasz-Dabala.jpg");
-    
 
-        
+    std::shared_ptr<Texture2D> cubeTexture = Texture2D::fromImage("D:\\PROGRAMOWANIE\\GKOM\\resources\\textures\\Lukasz-Dabala.jpg");
 
     Object screen;  // screen plane for postprocessing
     screen.addVertexBuffer(createVertexBuffer(screenMesh.vertices));
@@ -152,11 +148,7 @@ int main() {
     shaderMSAA.modifyUniform<float>("exposure", 0.3f);     // High Dynamic Range - adjust this value so that it looks good
     
     screen.addTexture(hdrTexture);
-
-
-
 	cubes.addTexture(cubeTexture);
-    
 
 
     glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 1.0f);

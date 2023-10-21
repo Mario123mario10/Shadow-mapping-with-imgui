@@ -30,11 +30,12 @@ class Texture2D : public Texture {
 	int width;
 	int height;
 	int internalFormat;
-	std::unique_ptr<unsigned char> textureImage;
+	std::shared_ptr<unsigned char> textureImage;
 public:
 	Texture2D(int width, int height, int internalFormat, int textureLevel = 1);
-	~Texture2D();
-	//void loadImage(std::string imagePath);
+	//~Texture2D() override;
+	void setTextureImage(std::shared_ptr<unsigned char> textureImage);
+	void initialiseTexture();
 	static std::shared_ptr<Texture2D> fromImage(std::string imagePath);
 };
 
