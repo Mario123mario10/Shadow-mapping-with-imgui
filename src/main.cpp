@@ -144,7 +144,7 @@ int main() {
 
 
     std::shared_ptr<TextureCubeMap> textureCubeMap(new TextureCubeMap(texture_filenames));
-    int samples = { 4 };
+    int samples = { 8 };
     std::shared_ptr<Texture2DMultisample> hdrTexture = std::make_shared<Texture2DMultisample>(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);   // here we store colours of each fragment/pixel
     RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);     // here we store depths of each fragment/pixel
     Framebuffer hdrFramebuffer({ GL_COLOR_ATTACHMENT0 }, GL_NONE); // framebuffer requires buffers to store colour and depth...
