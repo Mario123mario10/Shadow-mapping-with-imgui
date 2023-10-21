@@ -8,6 +8,24 @@ uniform vec3 lightColor;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 
+struct Light {
+    vec3 position;  
+    vec3 direction;
+    float cutOff;
+    float outerCutOff;
+  
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+	
+    float constant;
+    float linear;
+    float quadratic;
+};
+
+uniform Light light;
+
+
 void main() {
     vec3 fragColor = 0.5 * vec3(3.0, 0.5, 0.31);
     // ambient
