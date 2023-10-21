@@ -87,13 +87,13 @@ int main() {
         2, 3, 0
     };
 
-    std::vector<std::string> texture_filenames = {
-        "right.jpg",
-        "left.jpg",
-        "top.jpg",
-        "bottom.jpg",
-        "front.jpg",
-        "back.jpg"
+    std::vector<std::string_view> texture_filenames = {
+        CUBEMAP_PATH "right.jpg",
+        CUBEMAP_PATH "left.jpg",
+        CUBEMAP_PATH "top.jpg",
+        CUBEMAP_PATH "bottom.jpg",
+        CUBEMAP_PATH "front.jpg",
+        CUBEMAP_PATH "back.jpg"
     };
 
     std::random_device rd;
@@ -116,6 +116,7 @@ int main() {
     Shader shaderCubeMap(SHADERS_PATH "cubemap.vert.glsl", SHADERS_PATH "cubemap.frag.glsl");
     ObjectLoader<uint8_t> obj(MODELS_PATH "cube.obj");  // only loads mesh from .obj file
 
+    std::shared_ptr<Texture2D> textureImage(new Texture2D(TEXTURES_PATH "drakan.jpg"));
 
     const Mesh<Vertex3D, uint8_t>& cubeMesh = obj.getMesh();    // we can get mesh from object
     const Mesh<Vertex2D, uint8_t>& screenMesh = { screenVertices, screenIndices };  // also we can create mesh from our own vectors
@@ -127,6 +128,7 @@ int main() {
     cubes.addVertexBuffer(cubeVbo); // first vertex buffer which stores mesh of the cube
     cubes.addVertexBuffer(createVertexBuffer(models, true));    // second vertex buffer which stores model matrices of our cubes held in "cubes" variable
     cubes.attachIndexBuffer(cubeIbo);
+    cubes.addTexture(textureImage);
 
     Object cube;    // regular cube object
     cube.addVertexBuffer(cubeVbo);
@@ -174,6 +176,7 @@ int main() {
     shader.use();
     shader.modifyUniform<glm::vec3>("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
     shader.modifyUniform<glm::vec3>("lightPos", lightPos);
+    shader.modifyUniform<int>("diffuseTexture", 0);
 
     float last = 0.0f;
     while (!glfwWindowShouldClose(window)) {

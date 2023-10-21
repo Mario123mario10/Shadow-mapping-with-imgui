@@ -1,6 +1,7 @@
 #include "texture.h"
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 
 #include <iostream>
 #include <string>
@@ -40,45 +41,74 @@ int Texture2DMultisample::getSamplesNumber() const {
     return samples;
 }
 
-Texture2D::Texture2D() : Texture(GL_TEXTURE_2D) {
-
-}
-
-TextureCubeMap::TextureCubeMap(const std::vector<std::string>& textureFilenames) 
-    : Texture(GL_TEXTURE_CUBE_MAP) {
-    glBindTexture(GL_TEXTURE_CUBE_MAP, id);
-
+void helperSetTextureFormat(unsigned int* format, unsigned int* internalFormat, int nrChannels) {
     enum {
         R = 1,
         RGB = 3,
         RGBA = 4
     };
 
-    for (unsigned int i = 0; i < 6; i++) {
-        int width, height, nrChannels;
-        std::string texturePath = CUBEMAP_PATH + textureFilenames[i];
-        unsigned char* data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
+    switch (nrChannels)
+    {
+    case R:
+        *internalFormat = GL_RED;
+        *format = GL_RED;
+        break;
+    case RGB:
+        *internalFormat = GL_RGB8;
+        *format = GL_RGB;
+        break;
+    case RGBA:
+        *internalFormat = GL_RGBA8;
+        *format = GL_RGBA;
+        break;
+    }
+}
 
-        int internalFormat;
-        int format;
+Texture2D::Texture2D(std::string_view filePath) : Texture(GL_TEXTURE_2D) {
+    int nrChannels = {}, width = {}, height = {};
+    unsigned int internalFormat = { GL_NONE }, format = { GL_NONE };
+
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char* data = stbi_load(filePath.data(), &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        helperSetTextureFormat(&format, &internalFormat, nrChannels);
+        glBindTexture(GL_TEXTURE_2D, id);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        // alternative code
+        //numMipMaps = static_cast<unsigned int>(glm::log2(static_cast<float>(width)));
+        //glTexStorage2D(GL_TEXTURE_2D, numMipMaps, internalFormat, width, height);
+        //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, data);
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to laod data from file " << filePath << std::endl;
+    }
+    stbi_set_flip_vertically_on_load(false);
+    stbi_image_free(data);
+}
+
+TextureCubeMap::TextureCubeMap(const std::vector<std::string_view>& textureFilenames) 
+    : Texture(GL_TEXTURE_CUBE_MAP) {
+    glBindTexture(type, id);
+
+    for (unsigned int i = 0; i < 6; i++) {
+        int nrChannels = {}, width = {}, height = {};
+        unsigned int internalFormat, format;
+
+        unsigned char* data = stbi_load(textureFilenames[i].data(), &width, &height, &nrChannels, 0);
 
         if (data) {
-            switch (nrChannels)
-            {
-            case R:
-                internalFormat = GL_RED;
-                format = GL_RED;
-                break;
-            case RGB:
-                internalFormat = GL_RGB8;
-                format = GL_RGB;
-                break;
-            case RGBA:
-                internalFormat = GL_RGBA8;
-                format = GL_RGBA;
-                break;
-            }
-
+            helperSetTextureFormat(&format, &internalFormat, nrChannels);
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
             stbi_image_free(data);
         }
