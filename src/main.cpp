@@ -175,7 +175,10 @@ int main() {
 
     shader.use();
     shader.modifyUniform<glm::vec3>("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-    shader.modifyUniform<glm::vec3>("lightPos", lightPos);
+    shader.modifyUniform<glm::vec3>("light.position", lightPos);
+    shader.modifyUniform<float>("light.constant", 1.0f);
+    shader.modifyUniform<float>("light.linear", 0.09f);
+    shader.modifyUniform<float>("light.quadratic", 0.032f);
     shader.modifyUniform<int>("diffuseTexture", 0);
 
     float last = 0.0f;
