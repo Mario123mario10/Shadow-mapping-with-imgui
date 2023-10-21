@@ -1,7 +1,8 @@
 #pragma once
+#include <glad/glad.h>
 #include <shader.h>
-#include <vertex_array.h>
 #include <vertex_buffer.h>
+#include <vertex_array.h>
 #include <index_buffer.h>
 #include <primitives.h>
 #include <texture.h>

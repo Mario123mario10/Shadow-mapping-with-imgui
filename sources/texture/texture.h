@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <string_view>
 
 class Texture {
 protected:
@@ -27,12 +28,11 @@ public:
 // Olek
 class Texture2D : public Texture {
 public:
-	Texture2D();
+	Texture2D(std::string_view filePath);
 };
 
 // Mariusz
 class TextureCubeMap : public Texture {
 public:
-	TextureCubeMap(const std::vector<std::string>& textureFilenames);
-	//void load_faces(std::string texture_path, std::vector<std::string> texture_filenames);
+	TextureCubeMap(const std::vector<std::string_view>& textureFilenames);
 };

@@ -37,10 +37,12 @@ add_subdirectory(sources/object)
 
 add_executable("${CMAKE_PROJECT_NAME}")
 
-set_property(TARGET "${CMAKE_PROJECT_NAME}" PROPERTY CXX_STANDARD 23)
+set_property(TARGET "${CMAKE_PROJECT_NAME}" PROPERTY CXX_STANDARD 20)
 
 target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC SHADERS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders/")
 target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC MODELS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/models/")
+target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC TEXTURES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/")
+target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC CUBEMAP_PATH="${CMAKE_SOURCE_DIR}/resources/cubemap/")
 
 
 target_sources("${CMAKE_PROJECT_NAME}" PRIVATE ${MY_SOURCES} )
