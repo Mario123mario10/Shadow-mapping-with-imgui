@@ -38,16 +38,12 @@ vec3 applyHDR(vec3 color) {
 
 
 void main() {
-    vec3 fragColor = vec3(0, 0, 0), fragPos = vec3(0, 0, 0), norm = vec3(0, 0, 0);
+    vec3 fragColor, fragPos, norm;
     int numNormals = 0;
     for(int i = 0; i < numSamples; i++){
         fragColor += texelFetch(albedoTexture, ivec2(gl_FragCoord.xy), i).rgb;
-        vec3 tempNor = texelFetch(normalTexture, ivec2(gl_FragCoord.xy), i).rgb;
-//        if(tempNor.x == 0.0 && tempNor.y == 0.0 && tempNor.z == 0.0) {
-//            numNormals++;
-            norm += tempNor;
-            fragPos += texelFetch(positionTexture, ivec2(gl_FragCoord.xy), i).rgb;
-//        }
+        norm += texelFetch(normalTexture, ivec2(gl_FragCoord.xy), i).rgb;
+        fragPos += texelFetch(positionTexture, ivec2(gl_FragCoord.xy), i).rgb;
     }
     fragColor /= numSamples;
     fragPos /= numSamples;
