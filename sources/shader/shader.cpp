@@ -83,10 +83,10 @@ void Shader::createProgram(const std::string& vertexPath, const std::string& fra
     linkValidateError();
 }
 
-template<typename T>
-void Shader::modifyUniform(const std::string& name, const T& uniformVariable) const {
-    static_assert(false, "Unrecognized uniform variable!");
-}
+//template<typename T>
+//void Shader::modifyUniform(const std::string& name, const T& uniformVariable) const {
+//    static_assert(false, "Unrecognized uniform variable!");
+//}
 
 template<>
 void Shader::modifyUniform<glm::mat4>(const std::string& name, const glm::mat4& matrix) const {
