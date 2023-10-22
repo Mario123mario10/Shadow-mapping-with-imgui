@@ -49,7 +49,6 @@ VertexBufferLayout& VertexBuffer::getLayout() {
     return layout;
 }
 
-
 // do not use it
 void VertexBuffer::parseRawData(int size, const void* data) {
     glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
@@ -64,7 +63,6 @@ VertexBuffer::VertexBuffer() {
 }
 
 VertexBuffer::~VertexBuffer() {
-    std::cout << "DESTROYED" << std::endl;
     glDeleteBuffers(1, &id);
 }
 

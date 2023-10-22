@@ -114,12 +114,31 @@ int main() {
     Shader lightCubeShader(SHADERS_PATH "lightcube.vert.glsl", SHADERS_PATH "lightcube.frag.glsl"); // light shader setup here because other shaders are here as well
     Shader shaderMSAA(SHADERS_PATH "multisample_to_texture_2d.vert.glsl", SHADERS_PATH "multisample_to_texture_2d.frag.glsl");
     Shader shaderCubeMap(SHADERS_PATH "cubemap.vert.glsl", SHADERS_PATH "cubemap.frag.glsl");
+    Shader shaderGbuffer(SHADERS_PATH "gbuffer.vert.glsl", SHADERS_PATH "gbuffer.frag.glsl");
+    Shader shaderGbufferCubemap(SHADERS_PATH "gbuffer_cubemap.vert.glsl", SHADERS_PATH "gbuffer_cubemap.frag.glsl");
+    Shader shaderGbufferLightcube(SHADERS_PATH "gbuffer_lightcube.vert.glsl", SHADERS_PATH "gbuffer_lightcube.frag.glsl");
+    Shader shaderGbufferLightingPass(SHADERS_PATH "gbuffer_lighting_pass.vert.glsl", SHADERS_PATH "gbuffer_lighting_pass.frag.glsl");
     ObjectLoader<uint8_t> cubeObj(MODELS_PATH "cube.obj");  // only loads mesh from .obj file
     ObjectLoader<uint16_t> bulbObj(MODELS_PATH "bulb.obj");
 
+    // G BUFFER
     const int samples = { 4 };
+    RenderbufferMultisample gRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);
+    std::shared_ptr<Texture2DMultisample> positionTexture(new Texture2DMultisample(screenWidth, screenHeight, GL_RGBA32F, samples));
+    std::shared_ptr<Texture2DMultisample> normalTexture(new Texture2DMultisample(screenWidth, screenHeight, GL_RGBA32F, samples));
+    std::shared_ptr<Texture2DMultisample> albedoTexture(new Texture2DMultisample(screenWidth, screenHeight, GL_RGBA32F, samples));
+
+    Framebuffer gbufferFramebuffer({ GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 });
+    gbufferFramebuffer.use();
+    gbufferFramebuffer.attach(gRenderbuffer, GL_DEPTH_ATTACHMENT);
+    gbufferFramebuffer.attach(*positionTexture, GL_COLOR_ATTACHMENT0);
+    gbufferFramebuffer.attach(*normalTexture, GL_COLOR_ATTACHMENT1);
+    gbufferFramebuffer.attach(*albedoTexture, GL_COLOR_ATTACHMENT2);
+    gbufferFramebuffer.isComplete();
+
+
     RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);     // here we store depths of each fragment/pixel
-    std::shared_ptr<Texture2DMultisample> hdrTexture = std::make_shared<Texture2DMultisample>(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);   // here we store colours of each fragment/pixel
+    std::shared_ptr<Texture2DMultisample> hdrTexture( new Texture2DMultisample(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples));   // here we store colours of each fragment/pixel
     std::shared_ptr<TextureCubeMap> textureCubeMap(new TextureCubeMap(texture_filenames));
     std::shared_ptr<Texture2D> textureImage(new Texture2D(TEXTURES_PATH "drakan.jpg"));
 
@@ -147,6 +166,14 @@ int main() {
     Object screen;  // screen plane for postprocessing
     screen.addVertexBuffer(screenVbo);
     screen.attachIndexBuffer(screenIbo);
+    screen.addTexture(hdrTexture);
+
+    Object gbufferScreen;
+    gbufferScreen.addVertexBuffer(screenVbo);
+    gbufferScreen.attachIndexBuffer(screenIbo);
+    gbufferScreen.addTexture(positionTexture);
+    gbufferScreen.addTexture(normalTexture);
+    gbufferScreen.addTexture(albedoTexture);
 
     Object cubemap;
     cubemap.addVertexBuffer(cubeVbo);
@@ -169,7 +196,6 @@ int main() {
     shaderCubeMap.modifyUniform<int>("cubemap", 0);
     shaderCubeMap.modifyUniform<glm::mat4>("projection", camera.getProjectionMatrix());
 
-    screen.addTexture(hdrTexture);
 
     glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
@@ -184,6 +210,25 @@ int main() {
     shader.modifyUniform<float>("light.linear", 0.09f);
     shader.modifyUniform<float>("light.quadratic", 0.032f);
     shader.modifyUniform<int>("diffuseTexture", 0);
+
+    shaderGbuffer.use();
+    shaderGbuffer.modifyUniform<int>("diffuseTexture", 0);
+
+    shaderGbufferCubemap.use();
+    shaderGbufferCubemap.modifyUniform<int>("diffuseTexture", 0);
+    shaderGbufferCubemap.modifyUniform<glm::mat4>("projection", camera.getProjectionMatrix());
+
+    shaderGbufferLightingPass.use();
+    shaderGbufferLightingPass.modifyUniform<int>("positionTexture", 0);
+    shaderGbufferLightingPass.modifyUniform<int>("normalTexture", 1);
+    shaderGbufferLightingPass.modifyUniform<int>("albedoTexture", 2);
+    shaderGbufferLightingPass.modifyUniform<glm::vec3>("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    shaderGbufferLightingPass.modifyUniform<glm::vec3>("light.position", lightPos);
+    shaderGbufferLightingPass.modifyUniform<float>("light.constant", 1.0f);
+    shaderGbufferLightingPass.modifyUniform<float>("light.linear", 0.09f);
+    shaderGbufferLightingPass.modifyUniform<float>("light.quadratic", 0.032f);
+    shaderGbufferLightingPass.modifyUniform<int>("diffuseTexture", 0);
+    shaderGbufferLightingPass.modifyUniform<int>("numSamples", samples);
 
     float last = 0.0f;
     while (!glfwWindowShouldClose(window)) {
@@ -216,10 +261,38 @@ int main() {
         cubemap.render();
         glCullFace(GL_BACK);
 
-        // postprocessing
+        // GBUFFER
+        gbufferFramebuffer.use();
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        shaderGbuffer.use();
+        shaderGbuffer.modifyUniform<glm::mat4>("PV", camera.getProjectionMatrix() * camera.getViewMatrix());
+        cubes.render();
+
+        shaderGbufferLightcube.use();
+        shaderGbufferLightcube.modifyUniform<glm::mat4>("PVM", camera.getProjectionMatrix() * camera.getViewMatrix() * lightModel);
+        bulb.render();
+
+        shaderGbufferCubemap.use();
+        shaderGbufferCubemap.modifyUniform<glm::mat4>("view", glm::mat4(glm::mat3(camera.getViewMatrix())));
+        glDepthFunc(GL_LEQUAL);
+        glCullFace(GL_FRONT);
+        cubemap.render();
+        glCullFace(GL_BACK);
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
-        shaderMSAA.use();
-        screen.render();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        shaderGbufferLightingPass.use();
+        shaderGbufferLightingPass.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
+        gbufferScreen.render();
+
+        // postprocessing
+        //glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
+        //glViewport(0, 0, screenWidth, screenHeight);
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //shaderMSAA.use();
+        //screen.render();
         glDepthFunc(GL_LESS);
 
         // Swap the front and back buffers

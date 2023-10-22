@@ -28,6 +28,11 @@ void Framebuffer::attach<RenderbufferInterface>(const RenderbufferInterface& rbo
 }
 
 template<>
+void Framebuffer::attach<Renderbuffer>(const Renderbuffer& rbo, unsigned int attachment) {
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, rbo.getId());
+}
+
+template<>
 void Framebuffer::attach<RenderbufferMultisample>(const RenderbufferMultisample& rbo, unsigned int attachment) {
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, rbo.getId());
 }

@@ -29,6 +29,10 @@ void Texture::activate(unsigned int slot)  const {
     glBindTextureUnit(slot, id);
 }
 
+void Texture::use() const {
+    glBindTexture(type, id);
+}
+
 Texture2DMultisample::Texture2DMultisample(int width, int height, int internalFormat, unsigned int samples)
     : Texture(GL_TEXTURE_2D_MULTISAMPLE), width(width), height(height), internalFormat(internalFormat), samples(samples) {
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, id);
@@ -63,6 +67,15 @@ void helperSetTextureFormat(unsigned int* format, unsigned int* internalFormat, 
     }
 }
 
+Texture2D::Texture2D(int width, int height, unsigned int internalFormat) : Texture(GL_TEXTURE_2D) {
+    glBindTexture(type, id);
+    glTexStorage2D(type, 1, internalFormat, width, height);
+    glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
 Texture2D::Texture2D(std::string_view filePath) : Texture(GL_TEXTURE_2D) {
     int nrChannels = {}, width = {}, height = {};
     unsigned int internalFormat = { GL_NONE }, format = { GL_NONE };
@@ -72,20 +85,20 @@ Texture2D::Texture2D(std::string_view filePath) : Texture(GL_TEXTURE_2D) {
     if (data)
     {
         helperSetTextureFormat(&format, &internalFormat, nrChannels);
-        glBindTexture(GL_TEXTURE_2D, id);
+        glBindTexture(type, id);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(type, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         // alternative code
         //numMipMaps = static_cast<unsigned int>(glm::log2(static_cast<float>(width)));
         //glTexStorage2D(GL_TEXTURE_2D, numMipMaps, internalFormat, width, height);
         //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, data);
 
-        glGenerateMipmap(GL_TEXTURE_2D);
+        glGenerateMipmap(type);
     }
     else
     {
@@ -115,9 +128,9 @@ TextureCubeMap::TextureCubeMap(const std::vector<std::string_view>& textureFilen
         }
     }
 
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(type, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 }

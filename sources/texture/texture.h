@@ -11,6 +11,7 @@ public:
 	Texture(unsigned int type);
 	unsigned int getType() const;
 	void activate(unsigned int slot) const;
+	void use() const;
 	unsigned int getId() const;
 	virtual ~Texture();
 };
@@ -29,6 +30,7 @@ public:
 class Texture2D : public Texture {
 public:
 	Texture2D(std::string_view filePath);
+	Texture2D(int width, int height, unsigned int internalFormat);
 };
 
 // Mariusz
