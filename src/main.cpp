@@ -101,7 +101,7 @@ int main() {
     std::uniform_real_distribution<> dis(-100.0f, 100.0f);
     std::uniform_int_distribution<int> binDis(0, 1);
 
-    const int instances = { 1000 };
+    const int instances = { 100000 };
     std::vector<glm::mat4> models(instances);
 
     for (auto& model : models) {
@@ -122,7 +122,7 @@ int main() {
     ObjectLoader<uint16_t> bulbObj(MODELS_PATH "bulb.obj");
 
     // G BUFFER
-    const int samples = { 4 }, mplier = 4;
+    const int samples = { 4 }, mplier = 1;
     Renderbuffer gRenderbuffer(mplier * screenWidth, mplier * screenHeight, GL_DEPTH_COMPONENT);
     std::shared_ptr<Texture2D> positionTexture(new Texture2D(mplier * screenWidth, mplier * screenHeight, GL_RGBA32F));
     std::shared_ptr<Texture2D> normalTexture(new Texture2D(mplier * screenWidth, mplier * screenHeight, GL_RGBA32F));
