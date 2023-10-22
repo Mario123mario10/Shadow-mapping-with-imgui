@@ -236,30 +236,6 @@ int main() {
         glfwPollEvents();
         processInput(window, camera, deltaTime);
 
-        hdrFramebuffer.use(); // from now on we render to our own framebuffer
-
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // draw instanced cubes
-        shader.use();
-        shader.modifyUniform<glm::mat4>("PV", camera.getProjectionMatrix() * camera.getViewMatrix());
-        shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
-        cubes.render();
-
-        // draw light cube
-        lightCubeShader.use();
-        lightCubeShader.modifyUniform<glm::mat4>("PVM", camera.getProjectionMatrix() * camera.getViewMatrix() * lightModel);
-        bulb.render();
-
-        shaderCubeMap.use();
-        shaderCubeMap.modifyUniform<glm::mat4>("view", glm::mat4(glm::mat3(camera.getViewMatrix())));
-        glDepthFunc(GL_LEQUAL);
-        glCullFace(GL_FRONT);
-        cubemap.render();
-        glCullFace(GL_BACK);
-
-        // GBUFFER
         gbufferFramebuffer.use();
         glViewport(0, 0, mplier * screenWidth, mplier * screenHeight);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
