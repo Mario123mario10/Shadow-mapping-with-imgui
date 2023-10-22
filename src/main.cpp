@@ -122,11 +122,11 @@ int main() {
     ObjectLoader<uint16_t> bulbObj(MODELS_PATH "bulb.obj");
 
     // G BUFFER
-    const int samples = { 4 };
-    RenderbufferMultisample gRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);
-    std::shared_ptr<Texture2DMultisample> positionTexture(new Texture2DMultisample(screenWidth, screenHeight, GL_RGBA32F, samples));
-    std::shared_ptr<Texture2DMultisample> normalTexture(new Texture2DMultisample(screenWidth, screenHeight, GL_RGBA32F, samples));
-    std::shared_ptr<Texture2DMultisample> albedoTexture(new Texture2DMultisample(screenWidth, screenHeight, GL_RGBA32F, samples));
+    const int samples = { 4 }, mplier = 4;
+    Renderbuffer gRenderbuffer(mplier * screenWidth, mplier * screenHeight, GL_DEPTH_COMPONENT);
+    std::shared_ptr<Texture2D> positionTexture(new Texture2D(mplier * screenWidth, mplier * screenHeight, GL_RGBA32F));
+    std::shared_ptr<Texture2D> normalTexture(new Texture2D(mplier * screenWidth, mplier * screenHeight, GL_RGBA32F));
+    std::shared_ptr<Texture2D> albedoTexture(new Texture2D(mplier * screenWidth, mplier * screenHeight, GL_RGBA32F));
 
     Framebuffer gbufferFramebuffer({ GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 });
     gbufferFramebuffer.use();
@@ -135,7 +135,6 @@ int main() {
     gbufferFramebuffer.attach(*normalTexture, GL_COLOR_ATTACHMENT1);
     gbufferFramebuffer.attach(*albedoTexture, GL_COLOR_ATTACHMENT2);
     gbufferFramebuffer.isComplete();
-
 
     RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);     // here we store depths of each fragment/pixel
     std::shared_ptr<Texture2DMultisample> hdrTexture( new Texture2DMultisample(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples));   // here we store colours of each fragment/pixel
@@ -228,7 +227,6 @@ int main() {
     shaderGbufferLightingPass.modifyUniform<float>("light.linear", 0.09f);
     shaderGbufferLightingPass.modifyUniform<float>("light.quadratic", 0.032f);
     shaderGbufferLightingPass.modifyUniform<int>("diffuseTexture", 0);
-    shaderGbufferLightingPass.modifyUniform<int>("numSamples", samples);
 
     float last = 0.0f;
     while (!glfwWindowShouldClose(window)) {
@@ -263,6 +261,7 @@ int main() {
 
         // GBUFFER
         gbufferFramebuffer.use();
+        glViewport(0, 0, mplier * screenWidth, mplier * screenHeight);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -282,6 +281,7 @@ int main() {
         glCullFace(GL_BACK);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
+        glViewport(0, 0, screenWidth, screenHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shaderGbufferLightingPass.use();
         shaderGbufferLightingPass.modifyUniform<glm::vec3>("viewPos", camera.getPosition());

@@ -20,10 +20,9 @@ uniform vec3 lightColor;
 uniform vec3 viewPos;
 uniform Light light;
 
-uniform int numSamples;
-uniform sampler2DMS positionTexture;
-uniform sampler2DMS normalTexture;
-uniform sampler2DMS albedoTexture;
+uniform sampler2D positionTexture;
+uniform sampler2D normalTexture;
+uniform sampler2D albedoTexture;
 
 float gamma = 2.2;
 float exposure = 0.75;
@@ -38,24 +37,9 @@ vec3 applyHDR(vec3 color) {
 
 
 void main() {
-    vec3 fragColor = vec3(0, 0, 0), fragPos = vec3(0, 0, 0), norm = vec3(0, 0, 0);
-    int numNormals = 0;
-    for(int i = 0; i < numSamples; i++){
-        fragColor += texelFetch(albedoTexture, ivec2(gl_FragCoord.xy), i).rgb;
-        vec3 tempNor = texelFetch(normalTexture, ivec2(gl_FragCoord.xy), i).rgb;
-//        if(tempNor.x == 0.0 && tempNor.y == 0.0 && tempNor.z == 0.0) {
-//            numNormals++;
-            norm += tempNor;
-            fragPos += texelFetch(positionTexture, ivec2(gl_FragCoord.xy), i).rgb;
-//        }
-    }
-    fragColor /= numSamples;
-    fragPos /= numSamples;
-    norm /= numSamples;
-
-//    fragColor = texture(albedoTexture, texCoords).xyz;
-//    fragPos = texture(positionTexture, texCoords).xyz;
-//    norm = texture(normalTexture, texCoords).xyz;
+    vec3 fragColor = texture(albedoTexture, texCoords).xyz;
+    vec3 fragPos = texture(positionTexture, texCoords).xyz;
+    vec3 norm = texture(normalTexture, texCoords).xyz;
     if(norm.x == 0.0 && norm.y == 0.0 && norm.z == 0.0) {
         outColor = vec4(fragColor, 1.0);
     } else {
