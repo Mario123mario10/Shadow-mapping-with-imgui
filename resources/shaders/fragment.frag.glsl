@@ -38,12 +38,12 @@ void main() {
     // specular
     float specularStrength = 3.0;
     vec3 viewDir = normalize(viewPos - fragPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
 
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    float spec = pow(max(dot(norm, halfwayDir), 0.0), 128);
     vec3 specular = specularStrength * spec * lightColor;
 
-    // attentuation
+    // attenuation
     float distance = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance)); 
 
