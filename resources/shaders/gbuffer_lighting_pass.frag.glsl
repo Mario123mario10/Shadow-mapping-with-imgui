@@ -49,9 +49,6 @@ void main() {
     fragPos /= numSamples;
     norm /= numSamples;
 
-//    fragColor = texture(albedoTexture, texCoords).xyz;
-//    fragPos = texture(positionTexture, texCoords).xyz;
-//    norm = texture(normalTexture, texCoords).xyz;
     if(norm.x == 0.0 && norm.y == 0.0 && norm.z == 0.0) {
         outColor = vec4(fragColor, 1.0);
     } else {

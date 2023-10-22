@@ -101,7 +101,7 @@ int main() {
     std::uniform_real_distribution<> dis(-100.0f, 100.0f);
     std::uniform_int_distribution<int> binDis(0, 1);
 
-    const int instances = { 1000 };
+    const int instances = { 100000 };
     std::vector<glm::mat4> models(instances);
 
     for (auto& model : models) {
@@ -237,29 +237,6 @@ int main() {
 
         glfwPollEvents();
         processInput(window, camera, deltaTime);
-
-        hdrFramebuffer.use(); // from now on we render to our own framebuffer
-
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // draw instanced cubes
-        shader.use();
-        shader.modifyUniform<glm::mat4>("PV", camera.getProjectionMatrix() * camera.getViewMatrix());
-        shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
-        cubes.render();
-
-        // draw light cube
-        lightCubeShader.use();
-        lightCubeShader.modifyUniform<glm::mat4>("PVM", camera.getProjectionMatrix() * camera.getViewMatrix() * lightModel);
-        bulb.render();
-
-        shaderCubeMap.use();
-        shaderCubeMap.modifyUniform<glm::mat4>("view", glm::mat4(glm::mat3(camera.getViewMatrix())));
-        glDepthFunc(GL_LEQUAL);
-        glCullFace(GL_FRONT);
-        cubemap.render();
-        glCullFace(GL_BACK);
 
         // GBUFFER
         gbufferFramebuffer.use();
