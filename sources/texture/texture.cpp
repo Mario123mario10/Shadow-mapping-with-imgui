@@ -32,8 +32,6 @@ void Texture::activate(unsigned int slot)  const {
 Texture2DMultisample::Texture2DMultisample(int width, int height, int internalFormat, unsigned int samples)
     : Texture(GL_TEXTURE_2D_MULTISAMPLE), width(width), height(height), internalFormat(internalFormat), samples(samples) {
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, id);
-    if (samples < 2)
-        std::cout << "Number of samples must be at least 2!!!" << std::endl;
     glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, internalFormat, width, height, true);
 }
 
