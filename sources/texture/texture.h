@@ -25,14 +25,21 @@ public:
 	int getSamplesNumber() const;
 };
 
-// Olek
 class Texture2D : public Texture {
 public:
 	Texture2D(std::string_view filePath);
 };
 
-// Mariusz
 class TextureCubeMap : public Texture {
 public:
 	TextureCubeMap(const std::vector<std::string_view>& textureFilenames);
+};
+
+class ShadowMap : public Texture {
+public:
+	ShadowMap(int width, int height, int internalFormat);
+};
+
+class ShadowCubeMap : public Texture {
+	ShadowCubeMap(int width, int height, int internalFormat);
 };
