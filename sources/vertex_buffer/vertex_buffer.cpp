@@ -3,10 +3,10 @@
 #include "vertex_buffer.h"
 #include <iostream>
 
-template<typename T>
-void VertexBufferLayout::addLayoutElement(int count, bool instanced) {
-    static_assert(false, "Wrong type");
-}
+//template<typename T>
+//void VertexBufferLayout::addLayoutElement(int count, bool instanced) {
+//    static_assert(false, "Wrong type");
+//}
 
 template<>
 void VertexBufferLayout::addLayoutElement<char>(int count, bool instanced) {
