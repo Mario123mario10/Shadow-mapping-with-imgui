@@ -15,6 +15,7 @@
 #include <renderbuffer.h>
 #include <primitives.h>
 #include <object.h>
+#include <light.h>
 // standard template libraries
 #include <fstream>
 #include <sstream>
@@ -71,10 +72,11 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(1.0f, 0.0f);
 
     glViewport(0, 0, screenWidth, screenHeight);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) -> void { glViewport(0, 0, width, height); });
-
     const std::vector<Vertex2D> screenVertices = {
         { {-1.0f, -1.0f},   {0.0f, 0.0f} },
         { { 1.0f, -1.0f},   {1.0f, 0.0f} },
@@ -101,7 +103,7 @@ int main() {
     std::uniform_real_distribution<> dis(-100.0f, 100.0f);
     std::uniform_int_distribution<int> binDis(0, 1);
 
-    const int instances = { 1000 };
+    const int instances = { 100000 };
     std::vector<glm::mat4> models(instances);
 
     for (auto& model : models) {
@@ -114,6 +116,7 @@ int main() {
     Shader lightCubeShader(SHADERS_PATH "lightcube.vert.glsl", SHADERS_PATH "lightcube.frag.glsl"); // light shader setup here because other shaders are here as well
     Shader shaderMSAA(SHADERS_PATH "multisample_to_texture_2d.vert.glsl", SHADERS_PATH "multisample_to_texture_2d.frag.glsl");
     Shader shaderCubeMap(SHADERS_PATH "cubemap.vert.glsl", SHADERS_PATH "cubemap.frag.glsl");
+    Shader shaderShadow(SHADERS_PATH "shadowmap.vert.glsl", SHADERS_PATH "shadowmap.frag.glsl");
     ObjectLoader<uint8_t> cubeObj(MODELS_PATH "cube.obj");  // only loads mesh from .obj file
     ObjectLoader<uint16_t> bulbObj(MODELS_PATH "bulb.obj");
 
@@ -122,6 +125,8 @@ int main() {
     std::shared_ptr<Texture2DMultisample> hdrTexture = std::make_shared<Texture2DMultisample>(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);   // here we store colours of each fragment/pixel
     std::shared_ptr<TextureCubeMap> textureCubeMap(new TextureCubeMap(texture_filenames));
     std::shared_ptr<Texture2D> textureImage(new Texture2D(TEXTURES_PATH "drakan.jpg"));
+    const int shadowMapWidth = 2048, shadowMapHeight = 2048;
+    std::shared_ptr<ShadowMap> shadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
 
     const Mesh<Vertex2D, uint8_t>& screenMesh = { screenVertices, screenIndices };  // also we can create mesh from our own vectors
 
@@ -134,11 +139,16 @@ int main() {
     auto screenVbo = createVertexBuffer(screenMesh.vertices);
     auto screenIbo = createIndexBuffer(screenMesh.indices);
 
+    PerspectiveLight light(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
+    light.setPosition(0.0f, 0.0f, 0.0f);
+    light.setViewDirection(0.0f, 0.0f, -1.0f);
+
     ObjectInstanced cubes(instances);
     cubes.addVertexBuffer(cubeVbo); // first vertex buffer which stores mesh of the cube
     cubes.attachIndexBuffer(cubeIbo);
     cubes.addVertexBuffer(createVertexBuffer(models, true));    // second vertex buffer which stores model matrices of our cubes held in "cubes" variable
     cubes.addTexture(textureImage);
+    cubes.addTexture(shadowMap);
 
     Object bulb;    // regular cube object
     bulb.addVertexBuffer(bulbVbo);
@@ -159,6 +169,11 @@ int main() {
     hdrFramebuffer.attach(hdrRenderbuffer, GL_DEPTH_ATTACHMENT); // we pass depth storage
     hdrFramebuffer.isComplete();    // check if everything is fine
 
+    Framebuffer shadowFramebuffer({ GL_NONE }, GL_NONE);
+    shadowFramebuffer.use();
+    shadowFramebuffer.attach(*shadowMap, GL_DEPTH_ATTACHMENT);
+    shadowFramebuffer.isComplete();
+
     shaderMSAA.use();
     shaderMSAA.modifyUniform<int>("planeTexture", 0);
     shaderMSAA.modifyUniform<int>("numSamples", samples);
@@ -171,19 +186,19 @@ int main() {
 
     screen.addTexture(hdrTexture);
 
-    glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+    glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), light.getPosition()) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
 
     camera.setMovementSpeed(7.0f);
     camera.setMouseSpeed(0.05f);
 
     shader.use();
     shader.modifyUniform<glm::vec3>("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-    shader.modifyUniform<glm::vec3>("light.position", lightPos);
+    shader.modifyUniform<glm::vec3>("light.position", light.getPosition());
     shader.modifyUniform<float>("light.constant", 1.0f);
     shader.modifyUniform<float>("light.linear", 0.09f);
     shader.modifyUniform<float>("light.quadratic", 0.032f);
     shader.modifyUniform<int>("diffuseTexture", 0);
+    shader.modifyUniform<int>("shadowMap", 1);
 
     float last = 0.0f;
     while (!glfwWindowShouldClose(window)) {
@@ -193,14 +208,31 @@ int main() {
         glfwPollEvents();
         processInput(window, camera, deltaTime);
 
-        hdrFramebuffer.use(); // from now on we render to our own framebuffer
+        // shadow depth map
+        shadowFramebuffer.use();
+        glViewport(0, 0, shadowMapWidth, shadowMapHeight);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        shaderShadow.use();
+        //shaderShadow.modifyUniform<glm::mat4>("model", glm::mat4(1.0f));
+        shaderShadow.modifyUniform<glm::mat4>("PV", light.getProjectionMatrix() * light.getViewMatrix());
+        shaderShadow.modifyUniform<bool>("instanced", true);
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(1.7f, 3.0f);
+        cubes.renderDepth();
+        glDisable(GL_POLYGON_OFFSET_FILL);
 
+        //shaderShadow.modifyUniform<bool>("instanced", false);
+        //bulb.renderDepth();
+
+        hdrFramebuffer.use(); // from now on we render to our own framebuffer
+        glViewport(0, 0, screenWidth, screenHeight);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // draw instanced cubes
         shader.use();
-        shader.modifyUniform<glm::mat4>("PV", camera.getProjectionMatrix() * camera.getViewMatrix());
+        shader.modifyUniform<glm::mat4>("ProjViewMat", camera.getProjectionMatrix() * camera.getViewMatrix());
+        shader.modifyUniform<glm::mat4>("LightProjViewMat", light.getProjectionMatrix() * light.getViewMatrix());
         shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
         cubes.render();
 
