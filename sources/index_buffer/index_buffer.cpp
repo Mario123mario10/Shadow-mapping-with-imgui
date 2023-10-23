@@ -22,10 +22,10 @@ unsigned IndexBuffer::getType() const {
 	return type;
 }
 
-template<typename T>
-void IndexBuffer::setType() {
-	static_assert(false, "Type of index can be: uint8_t, uint16_t, uint32_t");
-}
+//template<typename T>
+//void IndexBuffer::setType() {
+//	static_assert(false, "Type of index can be: uint8_t, uint16_t, uint32_t");
+//}
 
 template<>
 void IndexBuffer::setType<uint8_t>() {
