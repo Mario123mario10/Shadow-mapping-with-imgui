@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include <iostream>
+#include <array>
 #include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -120,4 +121,30 @@ TextureCubeMap::TextureCubeMap(const std::vector<std::string_view>& textureFilen
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+}
+
+ShadowMap::ShadowMap(int width, int height, int internalFormat) : Texture(GL_TEXTURE_2D) {
+    glBindTexture(type, id);
+    const std::array<float, 4> border = { 1.0f, 0.0f, 0.0f, 0.0f };
+    glBindTexture(type, id);
+    glTexStorage2D(type, 1, internalFormat, width, height);
+    glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(type, GL_TEXTURE_BORDER_COLOR, border.data());
+    glTexParameteri(type, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    glTexParameteri(type, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+}
+
+ShadowCubeMap::ShadowCubeMap(int width, int height, int internalFormat) : Texture(GL_TEXTURE_CUBE_MAP) {
+    glBindTexture(type, id);
+    glTexStorage2D(type, 1, internalFormat, width, height);
+    glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(type, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(type, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    glTexParameteri(type, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 }

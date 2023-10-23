@@ -42,6 +42,11 @@ void Framebuffer::attach<Texture2DMultisample>(const Texture2DMultisample& textu
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture.getType(), texture.getId(), 0);
 }
 
+template<>
+void Framebuffer::attach<ShadowMap>(const ShadowMap& texture, unsigned int attachment) {
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture.getType(), texture.getId(), 0);
+}
+
 void Framebuffer::use() const {
 	glBindFramebuffer(GL_FRAMEBUFFER, id);
 }

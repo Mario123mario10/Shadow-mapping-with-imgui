@@ -8,6 +8,11 @@ void Object::render() {
 	glDrawElements(GL_TRIANGLES, ibo->getSize(), ibo->getType(), 0);
 }
 
+void Object::renderDepth() {
+	vao.use();
+	glDrawElements(GL_TRIANGLES, ibo->getSize(), ibo->getType(), 0);
+}
+
 void ObjectInterface::addVertexBuffer(std::shared_ptr<VertexBuffer> vbo) {
 	vbos.push_back(vbo);
 	vao.use();
@@ -27,6 +32,11 @@ void ObjectInstanced::render() {
 	for (unsigned int i = 0; i < textures.size(); i++) {
 		textures[i]->activate(i);
 	}
+	vao.use();
+	glDrawElementsInstanced(GL_TRIANGLES, ibo->getSize(), ibo->getType(), 0, amount);
+}
+
+void ObjectInstanced::renderDepth() {
 	vao.use();
 	glDrawElementsInstanced(GL_TRIANGLES, ibo->getSize(), ibo->getType(), 0, amount);
 }
