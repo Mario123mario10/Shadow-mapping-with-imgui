@@ -20,7 +20,7 @@ public:
     void attachIndexBuffer(std::shared_ptr<IndexBuffer> ibo);
     void addTexture(std::shared_ptr<Texture> texture);
     virtual void render() =0;
-    virtual void renderDepth() =0;
+    virtual void renderGeometry() =0;
     virtual ~ObjectInterface() = default;
 private:
 };
@@ -28,7 +28,7 @@ private:
 class Object : public ObjectInterface {
 public:
     virtual void render() override;
-    virtual void renderDepth() override;
+    virtual void renderGeometry() override;
 };
 
 class ObjectInstanced : public ObjectInterface {
@@ -36,5 +36,5 @@ class ObjectInstanced : public ObjectInterface {
 public:
     ObjectInstanced(int amount) : amount(amount) {};
     virtual void render() override;
-    virtual void renderDepth() override;
+    virtual void renderGeometry() override;
 };

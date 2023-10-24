@@ -18,6 +18,46 @@ void Light::setPosition(const glm::vec3& pos) {
 	position = pos;
 }
 
+void Light::setColor(float r, float g, float b) {
+	color = { r, g, b };
+}
+
+void Light::setColor(const glm::vec3& col) {
+	color = col;
+}
+
+void Light::setAttenuation(const glm::vec3& atten) {
+	attenuation = atten;
+}
+
+void Light::setAttenuation(float constantFactor, float linearFactor, float quadraticFactor) {
+	attenuation = { constantFactor, linearFactor, quadraticFactor };
+}
+
+const glm::vec3& Light::getPosition() const {
+	return position;
+}
+
+const glm::vec3& Light::getColor() const {
+	return color;
+}
+
+const glm::vec3& Light::getAttenuation() const {
+	return attenuation;
+}
+
+float Light::getAttenuationConstantFactor() const {
+	return attenuation.x;
+}
+
+float Light::getAttenuationLinearFactor() const {
+	return attenuation.y;
+}
+
+float Light::getAttenuationQuadraticFactor() const {
+	return attenuation.z;
+}
+
 PerspectiveLight::PerspectiveLight(float fovy, float aspectRatio, float zNear, float zFar) 
 	: Light(), projection(glm::perspective(fovy, aspectRatio, zNear, zFar)) {
 }

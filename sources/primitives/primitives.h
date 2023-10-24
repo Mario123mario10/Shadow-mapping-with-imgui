@@ -31,3 +31,4 @@ struct Mesh {
 	std::vector<VerticesType> vertices;
 	std::vector<IndicesType> indices;
 };
+

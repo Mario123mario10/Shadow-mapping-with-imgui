@@ -9,10 +9,22 @@
 class Light {
 protected:
 	glm::vec3 position;
+	glm::vec3 color;
+	glm::vec3 attenuation;
 public:
 	Light();
 	void setPosition(float x, float y, float z);
 	void setPosition(const glm::vec3& pos);
+	void setColor(float r, float g, float b);
+	void setColor(const glm::vec3& col);
+	void setAttenuation(float constantFactor, float linearFactor, float quadraticFactor);
+	void setAttenuation(const glm::vec3& col);
+	const glm::vec3& getPosition() const;
+	const glm::vec3& getColor() const;
+	const glm::vec3& getAttenuation() const;
+	float getAttenuationConstantFactor() const;
+	float getAttenuationLinearFactor() const;
+	float getAttenuationQuadraticFactor() const;
 };
 
 class PerspectiveLight : public Light {
