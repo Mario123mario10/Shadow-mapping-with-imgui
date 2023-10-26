@@ -193,10 +193,26 @@ int main() {
 
     shader.use();
     shader.modifyUniform<glm::vec3>("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    // point light
     shader.modifyUniform<glm::vec3>("light.position", light.getPosition());
     shader.modifyUniform<float>("light.constant", 1.0f);
     shader.modifyUniform<float>("light.linear", 0.09f);
     shader.modifyUniform<float>("light.quadratic", 0.032f);
+    // direcitonal lights
+    shader.modifyUniform<glm::vec3>("dirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
+    shader.modifyUniform<glm::vec3>("dirLight.ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+    shader.modifyUniform<glm::vec3>("dirLight.diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
+    shader.modifyUniform<glm::vec3>("dirLight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    // spotlight
+    shader.modifyUniform<glm::vec3>("spotlight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
+    shader.modifyUniform<glm::vec3>("spotlight.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.modifyUniform<glm::vec3>("dirLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.modifyUniform<float>("spotlight.constant", 1.0f);
+    shader.modifyUniform<float>("spotlight.linear", 0.09f);
+    shader.modifyUniform<float>("spotlight.quadratic", 0.032f);
+    shader.modifyUniform<float>("spotlight.cutOff", glm::cos(glm::radians(12.5)));
+    shader.modifyUniform<float>("spotlight.outerCutOff", glm::cos(glm::radians(17.5)));
+    // shadows
     shader.modifyUniform<int>("diffuseTexture", 0);
     shader.modifyUniform<int>("shadowMap", 1);
 
@@ -235,6 +251,10 @@ int main() {
         shader.modifyUniform<glm::mat4>("LightProjViewMat", light.getProjectionMatrix() * light.getViewMatrix());
         shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
         cubes.render();
+
+        // flashlight - follow camera
+        shader.modifyUniform<glm::vec3>("spotlight.position", camera.getPosition());
+        shader.modifyUniform<glm::vec3>("spotlight.direction", camera.getDirectionVector());
 
         // draw light cube
         lightCubeShader.use();
