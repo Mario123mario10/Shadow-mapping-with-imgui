@@ -8,7 +8,7 @@ void Object::render() {
 	glDrawElements(GL_TRIANGLES, ibo->getSize(), ibo->getType(), 0);
 }
 
-void Object::renderDepth() {
+void Object::renderGeometry() {
 	vao.use();
 	glDrawElements(GL_TRIANGLES, ibo->getSize(), ibo->getType(), 0);
 }
@@ -36,7 +36,7 @@ void ObjectInstanced::render() {
 	glDrawElementsInstanced(GL_TRIANGLES, ibo->getSize(), ibo->getType(), 0, amount);
 }
 
-void ObjectInstanced::renderDepth() {
+void ObjectInstanced::renderGeometry() {
 	vao.use();
 	glDrawElementsInstanced(GL_TRIANGLES, ibo->getSize(), ibo->getType(), 0, amount);
 }

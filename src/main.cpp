@@ -22,6 +22,7 @@
 #include <string>
 #include <random>
 #include <iostream>
+#include <chrono>
 
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
 
@@ -49,8 +50,8 @@ int main() {
         return -1;
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     int screenWidth = 1920, screenHeight = 1080;
@@ -73,7 +74,6 @@ int main() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glEnable(GL_POLYGON_OFFSET_FILL);
-    glPolygonOffset(1.0f, 0.0f);
 
     glViewport(0, 0, screenWidth, screenHeight);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) -> void { glViewport(0, 0, width, height); });
@@ -142,6 +142,8 @@ int main() {
     PerspectiveLight light(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
     light.setPosition(0.0f, 0.0f, 0.0f);
     light.setViewDirection(0.0f, 0.0f, -1.0f);
+    light.setColor(1.0f, 1.0f, 1.0f);
+    light.setAttenuation(1.0f, 0.09f, 0.032f);
 
     ObjectInstanced cubes(instances);
     cubes.addVertexBuffer(cubeVbo); // first vertex buffer which stores mesh of the cube
@@ -192,11 +194,11 @@ int main() {
     camera.setMouseSpeed(0.05f);
 
     shader.use();
-    shader.modifyUniform<glm::vec3>("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.modifyUniform<glm::vec3>("lightColor", light.getColor());
     shader.modifyUniform<glm::vec3>("light.position", light.getPosition());
-    shader.modifyUniform<float>("light.constant", 1.0f);
-    shader.modifyUniform<float>("light.linear", 0.09f);
-    shader.modifyUniform<float>("light.quadratic", 0.032f);
+    shader.modifyUniform<float>("light.constant", light.getAttenuationConstantFactor());
+    shader.modifyUniform<float>("light.linear", light.getAttenuationLinearFactor());
+    shader.modifyUniform<float>("light.quadratic", light.getAttenuationQuadraticFactor());
     shader.modifyUniform<int>("diffuseTexture", 0);
     shader.modifyUniform<int>("shadowMap", 1);
 
@@ -208,17 +210,19 @@ int main() {
         glfwPollEvents();
         processInput(window, camera, deltaTime);
 
+        const glm::mat4 cameraPV = camera.getProjectionMatrix() * camera.getViewMatrix();
+        const glm::mat4 lightPV = light.getProjectionMatrix() * light.getViewMatrix();
         // shadow depth map
         shadowFramebuffer.use();
         glViewport(0, 0, shadowMapWidth, shadowMapHeight);
         glClear(GL_DEPTH_BUFFER_BIT);
         shaderShadow.use();
         //shaderShadow.modifyUniform<glm::mat4>("model", glm::mat4(1.0f));
-        shaderShadow.modifyUniform<glm::mat4>("PV", light.getProjectionMatrix() * light.getViewMatrix());
+        shaderShadow.modifyUniform<glm::mat4>("PV", lightPV);
         shaderShadow.modifyUniform<bool>("instanced", true);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.7f, 3.0f);
-        cubes.renderDepth();
+        cubes.renderGeometry();
         glDisable(GL_POLYGON_OFFSET_FILL);
 
         //shaderShadow.modifyUniform<bool>("instanced", false);
@@ -226,23 +230,23 @@ int main() {
 
         hdrFramebuffer.use(); // from now on we render to our own framebuffer
         glViewport(0, 0, screenWidth, screenHeight);
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
         // draw instanced cubes
         shader.use();
-        shader.modifyUniform<glm::mat4>("ProjViewMat", camera.getProjectionMatrix() * camera.getViewMatrix());
-        shader.modifyUniform<glm::mat4>("LightProjViewMat", light.getProjectionMatrix() * light.getViewMatrix());
+        shader.modifyUniform<glm::mat4>("ProjViewMat", cameraPV);
+        shader.modifyUniform<glm::mat4>("LightProjViewMat", lightPV);
         shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
         cubes.render();
 
         // draw light cube
         lightCubeShader.use();
-        lightCubeShader.modifyUniform<glm::mat4>("PVM", camera.getProjectionMatrix() * camera.getViewMatrix() * lightModel);
+        lightCubeShader.modifyUniform<glm::mat4>("PVM", cameraPV * lightModel);
         bulb.render();
 
-        shaderCubeMap.use();
+        shaderCubeMap.use(); 
         shaderCubeMap.modifyUniform<glm::mat4>("view", glm::mat4(glm::mat3(camera.getViewMatrix())));
+
         glDepthFunc(GL_LEQUAL);
         glCullFace(GL_FRONT);
         cubemap.render();
