@@ -8,7 +8,7 @@ in vec4 lightFragPos;
 
 out vec4 outColor;
 
-struct Light {
+struct PointLight {
     vec3 position;  
   
 //    vec3 ambient;
@@ -52,7 +52,7 @@ const ivec2 offsets[] = ivec2[](
 
 uniform vec3 lightColor;
 uniform vec3 viewPos;
-uniform Light light;
+uniform PointLight light;
 uniform DirLight dirLight;
 uniform Spotlight spotlight;
 
@@ -72,7 +72,9 @@ float calculateShadow() {
 
 vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir) {
     vec3 lightDir = normalize(-light.direction);
+    // diffuse
     float diff = max(dot(normal, lightDir), 0.0);
+    // specular
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(normal, halfwayDir), 0.0), 128);
     vec3 ambient = light.ambient * lightColor;
@@ -104,30 +106,20 @@ vec3 calcSpotlight(Spotlight light, vec3 normal, vec3 viewDir) {
     return (diffuse + specular);
 }
 
-
-void main() {
-    vec3 fragColor = texture(diffuseTexture, texCoords).xyz;
-
-    vec3 norm = normalize(outNormal);
+vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir) {
     vec3 lightDir = normalize(light.position - fragPos);
-    vec3 viewDir = normalize(viewPos - fragPos);
-
-    vec3 dirResult = calcDirLight(dirLight, norm, viewDir);
-    vec3 spotResult = calcSpotlight(spotlight, norm, viewDir); 
-
     // ambient
     float ambientStrength = 0.25;
     vec3 ambient = ambientStrength * lightColor;
-
     // diffuse
-    float diff = max(dot(norm, lightDir), 0.0);
+    float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = diff * lightColor;
 
-    // specular
+     // specular
     float specularStrength = 3.0;
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
-    float spec = pow(max(dot(norm, halfwayDir), 0.0), 128);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), 128);
     vec3 specular = specularStrength * spec * lightColor;
 
     // attenuation
@@ -138,6 +130,20 @@ void main() {
     diffuse *= attenuation;
     specular *= attenuation;
 
+    return (ambient + calculateShadow() * (diffuse + specular));
+}
+
+void main() {
+    vec3 fragColor = texture(diffuseTexture, texCoords).xyz;
+
+    vec3 norm = normalize(outNormal);
+    vec3 lightDir = normalize(light.position - fragPos);
+    vec3 viewDir = normalize(viewPos - fragPos);
+
+    vec3 dirResult = calcDirLight(dirLight, norm, viewDir);
+    vec3 spotResult = calcSpotlight(spotlight, norm, viewDir); 
+    vec3 pointResult = calcPointLight(light, norm, viewDir);
+
     // final light
-    outColor =  vec4(fragColor * ((ambient + calculateShadow() * (diffuse + specular)) + spotResult), 1.0);
+    outColor =  vec4(fragColor * (pointResult + spotResult), 1.0);
 }

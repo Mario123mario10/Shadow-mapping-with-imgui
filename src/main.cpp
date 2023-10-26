@@ -199,14 +199,14 @@ int main() {
     shader.modifyUniform<float>("light.linear", 0.09f);
     shader.modifyUniform<float>("light.quadratic", 0.032f);
     // direcitonal lights
-    shader.modifyUniform<glm::vec3>("dirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
-    shader.modifyUniform<glm::vec3>("dirLight.ambient", glm::vec3(0.05f, 0.05f, 0.05f));
-    shader.modifyUniform<glm::vec3>("dirLight.diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
-    shader.modifyUniform<glm::vec3>("dirLight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    shader.modifyUniform<glm::vec3>("dirlight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
+    shader.modifyUniform<glm::vec3>("dirlight.ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+    shader.modifyUniform<glm::vec3>("dirlight.diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
+    shader.modifyUniform<glm::vec3>("dirlight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
     // spotlight
     shader.modifyUniform<glm::vec3>("spotlight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
     shader.modifyUniform<glm::vec3>("spotlight.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
-    shader.modifyUniform<glm::vec3>("dirLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.modifyUniform<glm::vec3>("spotlight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
     shader.modifyUniform<float>("spotlight.constant", 1.0f);
     shader.modifyUniform<float>("spotlight.linear", 0.09f);
     shader.modifyUniform<float>("spotlight.quadratic", 0.032f);
