@@ -59,42 +59,27 @@ float Light::getAttenuationQuadraticFactor() const {
 }
 
 PerspectiveLight::PerspectiveLight(float fovy, float aspectRatio, float zNear, float zFar) 
-	: Light(), projection(glm::perspective(fovy, aspectRatio, zNear, zFar)) {
+	: Light() {
+	projection = glm::perspective(fovy, aspectRatio, zNear, zFar);
 }
 
-const glm::mat4& PerspectiveLight::getProjectionMatrix() const {
+const glm::mat4& Light::getProjectionMatrix() const {
 	return projection;
 }
 
-glm::mat4 PerspectiveLight::getViewMatrix() const {
+glm::mat4 Light::getViewMatrix() const {
 	return glm::lookAt(position, position + viewDirection, UP_VECTOR);
 }
 
-const glm::vec3& PerspectiveLight::getPosition() const {
-	return position;
-}
-
-void PerspectiveLight::setViewDirection(float x, float y, float z) {
+void Light::setViewDirection(float x, float y, float z) {
 	viewDirection = { x, y, z };
 }
 
 OrthographicLight::OrthographicLight(float width, float height, float zNear, float zFar)
-	: Light(), projection(glm::ortho(-width / 2.0f, width / 2.0f, -height / 2.0f, height / 2.0f, zNear, zFar)) {
-
+	: Light() {
+	projection = glm::ortho(-width / 2.0f, width / 2.0f, -height / 2.0f, height / 2.0f, zNear, zFar);
 }
 
-const glm::mat4& OrthographicLight::getProjectionMatrix() const {
-	return projection;
-}
-
-glm::mat4 OrthographicLight::getViewMatrix() const {
-	return glm::lookAt(position, position + viewDirection, UP_VECTOR);
-}
-
-const glm::vec3& OrthographicLight::getPosition() const {
-	return position;
-}
-
-void OrthographicLight::setViewDirection(float x, float y, float z) {
-	 viewDirection = { x, y, z };
+void Light::setViewDirection(const glm::vec3& direction) {
+	viewDirection = direction;
 }

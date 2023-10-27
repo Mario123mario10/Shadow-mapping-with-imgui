@@ -3,6 +3,7 @@ add_library(Light light.cpp light.h)
 
 # Link ShaderLibrary with Glad and other dependencies
 target_link_libraries(Light PRIVATE glad glm)
+target_link_libraries(Light PUBLIC Framebuffer)
 
 target_include_directories(Light PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

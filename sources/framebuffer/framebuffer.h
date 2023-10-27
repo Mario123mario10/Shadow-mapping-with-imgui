@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 
 #include <initializer_list>
+#include <memory>
 #include <vector>
 
 class Framebuffer {

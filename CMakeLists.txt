@@ -35,6 +35,7 @@ add_subdirectory(sources/framebuffer)
 add_subdirectory(sources/renderbuffer)
 add_subdirectory(sources/object)
 add_subdirectory(sources/light)
+add_subdirectory(sources/actor)
 
 add_executable("${CMAKE_PROJECT_NAME}")
 
@@ -68,10 +69,11 @@ target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURC
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/renderbuffer")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/object")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/light")
+target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sources/actor")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # here link against library created in your module
-target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE ShaderLibrary VertexArray VertexBuffer ObjectLoader IndexBuffer Camera Texture Framebuffer Renderbuffer Object Light)
+target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE ShaderLibrary VertexArray VertexBuffer ObjectLoader IndexBuffer Camera Texture Framebuffer Renderbuffer Object Light Actor)
 
 # thirdparty libraries
 target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE glm glfw glad stb_image stb_truetype imgui)

@@ -1,7 +1,6 @@
 #include <glad/glad.h>
 
 #include "vertex_buffer.h"
-#include <iostream>
 
 //template<typename T>
 //void VertexBufferLayout::addLayoutElement(int count, bool instanced) {
@@ -64,7 +63,6 @@ VertexBuffer::VertexBuffer() {
 }
 
 VertexBuffer::~VertexBuffer() {
-    std::cout << "DESTROYED" << std::endl;
     glDeleteBuffers(1, &id);
 }
 
