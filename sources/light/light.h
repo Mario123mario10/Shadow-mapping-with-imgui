@@ -8,8 +8,6 @@
 
 class Light {
 protected:
-	glm::mat4 projection;
-	glm::vec3 viewDirection;
 	glm::vec3 position;
 	glm::vec3 color;
 	glm::vec3 attenuation;
@@ -27,21 +25,26 @@ public:
 	float getAttenuationConstantFactor() const;
 	float getAttenuationLinearFactor() const;
 	float getAttenuationQuadraticFactor() const;
-
-	glm::mat4 getViewMatrix() const;
-	const glm::mat4& getProjectionMatrix() const;
-	void setViewDirection(float x, float y, float z);
-	void setViewDirection(const glm::vec3& direction);
 };
 
 class PerspectiveLight : public Light {
+	glm::mat4 projection;
+	glm::vec3 viewDirection;
 public:
 	PerspectiveLight(float fovy, float aspectRatio, float zNear, float zFar);
-
+	const glm::mat4& getProjectionMatrix() const;
+	glm::mat4 getViewMatrix() const;
+	const glm::vec3& getPosition() const;
+	void setViewDirection(float x, float y, float z);
 };
 
 class OrthographicLight : public Light {
+	glm::mat4 projection;
+	glm::vec3 viewDirection;
 public:
 	OrthographicLight(float width, float height, float zNear, float zFar);
-	
+	const glm::mat4& getProjectionMatrix() const;
+	glm::mat4 getViewMatrix() const;
+	const glm::vec3& getPosition() const;
+	void setViewDirection(float x, float y, float z);
 };

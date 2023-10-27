@@ -1,7 +1,11 @@
 // Dear ImGui: standalone example application for GLFW + OpenGL2, using legacy fixed pipeline
 // (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
-// If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-// Read online: https://github.com/ocornut/imgui/tree/master/docs
+
+// Learn about Dear ImGui:
+// - FAQ                  https://dearimgui.com/faq
+// - Getting Started      https://dearimgui.com/getting-started
+// - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
+// - Introduction, links and more at the top of imgui.cpp
 
 // **DO NOT USE THIS CODE IF YOUR CODE/ENGINE IS USING MODERN OPENGL (SHADERS, VBO, VAO, etc.)**
 // **Prefer using the code in the example_glfw_opengl2/ folder**
@@ -16,6 +20,8 @@
 #endif
 #include <GLFW/glfw3.h>
 
+
+
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
 // Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
@@ -28,152 +34,278 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-// Main code
+//void ShowExampleAppCustomNodeGraph(bool* opened)
+//{
+//    ImGui::SetNextWindowSize(ImVec2(700, 600), ImGuiCond_FirstUseEver);
+//    if (!ImGui::Begin("Example: Custom Node Graph", opened))
+//    {
+//        ImGui::End();
+//        return;
+//    }
+//
+//    // Dummy
+//    struct Node
+//    {
+//        ImVec2 Pos, Size;
+//        int ID;
+//        char Name[32];
+//        ImGuiColorEditFlags ColorEditFlags;
+//
+//        Node(int id, const ImVec2& pos, const char* name, ImGuiColorEditFlags flags)
+//        {
+//            ID = id;
+//            Pos = pos;
+//            Size = ImVec2(100, 50);
+//            strncpy(Name, name, 31);
+//            ColorEditFlags = flags;
+//        }
+//
+//        void Draw()
+//        {
+//            ImGui::SetCursorScreenPos(Pos);
+//            ImGui::InvisibleButton(Name, Size);
+//            if (ImGui::IsItemActive() && !ImGui::IsItemHovered())
+//            {
+//                Pos.x += ImGui::GetIO().MouseDelta.x;
+//                Pos.y += ImGui::GetIO().MouseDelta.y;
+//            }
+//
+//            ImGui::PushID(ID)
+//                ;
+//            ImGui::BeginGroup();
+//            ImGui::Text("Node %d", ID);
+//            ImGui::ColorEdit3("Color", (float*)&Color, ColorEditFlags);
+//            ImGui::EndGroup();
+//            ImGui::PopID();
+//        }
+//    };
+//
+//    static ImVector<Node> nodes;
+//    if (nodes.Size == 0)
+//    {
+//        nodes.push_back(Node(0, ImVec2(50, 50), "Node 0", ImGuiColorEditFlags_RGB));
+//        nodes.push_back(Node(1, ImVec2(300, 50), "Node 1", ImGuiColorEditFlags_HSV));
+//    }
+//
+//    //Draw a list of nodes on the left side
+//    bool open_context_menu = false;
+//    int node_hovered_in_list = -1;
+//    int node_hovered_in_scene = -1;
+//    ImGui::BeginChild("node_list", ImVec2(100, 0));
+//    ImGui::Text("Nodes");
+//    ImGui::Separator();
+//    for (int node_idx = 0; node_idx < nodes.Size; node_idx++)
+//    {
+//        Node* node = &nodes[node_idx];
+//        ImGui::PushID(node->ID);
+//        if (ImGui::Selectable(node->Name, node->ID == node_hovered_in_list))
+//            node_hovered_in_list = node->ID;
+//        if (ImGui::IsItemHovered())
+//        {
+//            node_hovered_in_list = node->ID;
+//            open_context_menu |= ImGui::IsMouseClicked(1);
+//        }
+//        ImGui::PopID();
+//    }
+//    ImGui::EndChild();
+//
+//    ImGui::SameLine();
+//    ImGui::BeginGroup();
+//
+//    const float NODE_SLOT_RADIUS = 4.0f;
+//    const ImVec2 NODE_WINDOW_PADDING(8.0f, 8.0f);
+//
+//    // Create our child canvas
+//    ImGui::Text("Hold middle mouse button to scroll (%.2f,%.2f)", ImGui::GetScrollX(), ImGui::GetScrollY());
+//    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1, 1));
+//    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+//    ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(60, 60, 70, 200));
+//    ImGui::BeginChild("scrolling_region", ImVec2(0, 0), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove);
+//    ImGui::PushItemWidth(120.0f);
+//
+//    ImVec2 offset = ImGui::GetCursorScreenPos() + ImVec2(NODE_WINDOW_PADDING.x, NODE_WINDOW_PADDING.y);
+//    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+//    draw_list->ChannelsSplit(2);
+//
+//    // Display grid
+//    if (true)
+//    {
+//        ImU32 GRID_COLOR = IM_COL32(200, 200, 200, 40);
+//        float GRID_SZ = 64.0f;
+//        ImVec2 win_pos = ImGui::GetCursorScreenPos();
+//        ImVec2 canvas_sz = ImGui::GetWindowSize();
+//        for (float x = fmodf(ImGui::GetScrollX(), GRID_SZ); x < canvas_sz.x; x += GRID_SZ)
+//            draw_list->AddLine(ImVec2(x, 0.0f) + win_pos, ImVec2(x, canvas_sz.y) + win_pos, GRID_COLOR);
+//        for (float y = fmodf(ImGui::GetScrollY(), GRID_SZ); y < canvas_sz.y; y += GRID_SZ)
+//            draw_list->AddLine(ImVec2(0.0f, y) + win_pos, ImVec2(canvas_sz.x, y) + win_pos, GRID_COLOR);
+//    }
+//
+//    // Display nodes
+//    for (int node_idx = 0; node_idx < nodes.Size; node_idx++)
+//    {
+//        Node* node = &nodes[node_idx];
+//        ImGui::PushID(node->ID);
+//        ImVec2 node_rect_min = offset + node->Pos;
+//
+//        // Display node contents first
+//        draw_list->ChannelsSetCurrent(1); // Foreground
+//        bool old_any_active = ImGui::IsAnyItemActive();
+//        ImGui::SetCursorScreenPos(node_rect_min + NODE_WINDOW_PADDING);
+//        ImGui::BeginGroup(); // Lock horizontal position
+//        ImGui::Text("Node %d", node->ID);
+//        //ImGui::ColorEdit3("Color", (float*)&node->Color, node->ColorEditFlags);
+//        ImGui::EndGroup();
+//
+//        bool node_widgets_active = (!old_any_active && ImGui::IsAnyItemActive());
+//        node->Size = ImGui::GetItemRectSize() + NODE_WINDOW_PADDING + NODE_WINDOW_PADDING;
+//        ImVec2 node_rect_max = node_rect_min + node->Size;
+//
+//        // Display node box
+//        draw_list->ChannelsSetCurrent(0); // Background
+//        ImGui::SetCursorScreenPos(node_rect_min);
+//        ImGui::InvisibleButton("node", node->Size);
+//        if (ImGui::IsItemHovered())
+//        {
+//            node_hovered_in_scene = node->ID;
+//            open_context_menu |= ImGui::IsMouseClicked(1);
+//        }
+//        bool node_moving_active = ImGui::IsItemActive();
+//        if (node_widgets_active || node_moving_active)
+//            node_hovered_in_list = node->ID;
+//        if (node_moving_active && ImGui::IsMouseDragging(0))
+//            node->Pos = node->Pos + ImGui::GetIO().MouseDelta;
+//
+//        ImVec4 node_rect_color = (node_hovered_in_list == node->ID || node_hovered_in_scene == node->ID || (node_hovered_in_list == -1 && node_hovered_in_scene == -1)) ? ImVec4(1.0f, 0.0f, 0.0f, 0.5f) : ImVec4(1.0f, 1.0f, 1.0f, 0.5f);
+//        draw_list->AddRectFilled(node_rect_min, node_rect_max, IM_COL32(node_rect_color.x * 255, node_rect_color.y * 255, node_rect_color.z * 255, node_rect_color.w * 255), 4.0f);
+//        draw_list->AddRect(node_rect_min, node_rect_max, IM_COL32(100, 100, 100, 255), 4.0f);
+//
+//        ImGui::PopID();
+//    }
+//    draw_list->ChannelsMerge();
+//
+//    // Open context menu
+//    if (!ImGui::IsAnyItemHovered() && ImGui::IsMouseReleased(1))
+//        node_hovered_in_list = node_hovered_in_scene = -1;
+//    if (open_context_menu)
+//    {
+//        ImGui::OpenPopup("context_menu");
+//        if (node_hovered_in_list != -1)
+//            nodes[node_hovered_in_list].Selected = true;
+//    }
+//
+//    // Draw context menu
+//    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
+//    if (ImGui::BeginPopup("context_menu"))
+//    {
+//        Node* node = node_hovered_in_list != -1 ? &nodes[node_hovered_in_list] : NULL;
+//        ImVec2 scene_pos = ImGui::GetMousePosOnOpeningCurrentPopup() - offset;
+//        if (node)
+//        {
+//            ImGui::Text("Node '%s'", node->Name);
+//            ImGui::Separator();
+//            if (ImGui::MenuItem("Rename..", NULL, false, false)) {}
+//            if (ImGui::MenuItem("Delete", NULL, false, false)) {}
+//            if (ImGui::MenuItem("Copy", NULL, false, false)) {}
+//        }
+//        else
+//        {
+//            if (ImGui::MenuItem("Add")) { nodes.push_back(Node(nodes.Size, scene_pos, "Node", ImGuiColorEditFlags_RGB)); }
+//            if (ImGui::MenuItem("Paste", NULL, false, false)) {}
+//        }
+//        ImGui::EndPopup();
+//    }
+//    ImGui::PopStyleVar();
+//
+//    // Scrolling
+//    if (ImGui::IsWindowHovered() && !ImGui::IsAnyItemActive() && ImGui::IsMouseDragging(2, 0.0f))
+//        ImGui::SetScrollX(ImGui::GetScrollX() - ImGui::GetIO().MouseDelta.x);
+//    ImGui::SetScrollY(ImGui::GetScrollY() - ImGui::GetIO().MouseDelta.y);
+//
+//    ImGui::PopItemWidth();
+//    ImGui::EndChild();
+//    ImGui::PopStyleColor();
+//    ImGui::PopStyleVar(2);
+//    ImGui::EndGroup();
+//    ImGui::End();
+//}
+
+static int payload_data = 42;
+static bool item_dropped = false;
 int main(int, char**)
 {
-    glfwSetErrorCallback(glfw_error_callback);
+    // Inicjalizacja GLFW
     if (!glfwInit())
         return 1;
 
-    // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL2 example", NULL, NULL);
+    // Utworzenie okna GLFW
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "Przyk³ad ImGui + OpenGL 2", NULL, NULL);
     if (window == NULL)
         return 1;
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable vsync
+    glfwSwapInterval(1); // V-sync
 
-    // Setup Dear ImGui context
+    // Inicjalizacja ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-    //io.ConfigViewportsNoAutoMerge = true;
-    //io.ConfigViewportsNoTaskBarIcon = true;
-
-    // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
 
-    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    }
-
-    // Setup Platform/Renderer backends
+    // Inicjalizacja backendów ImGui
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL2_Init();
 
-    // Load Fonts
-    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-    // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-    // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-    // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
-    // - Read 'docs/FONTS.md' for more instructions and details.
-    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    //io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-    //IM_ASSERT(font != NULL);
-
-    // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-    // Main loop
+    // G³ówna pêtla renderowania
     while (!glfwWindowShouldClose(window))
     {
-        // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfwPollEvents();
 
-        // Start the Dear ImGui frame
+        // Rozpoczêcie ramki ImGui
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        // Twój kod ImGui tutaj
+        ImGui::Begin("Drag and Drop Example");
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+        // Element do przeci¹gania
+        if (ImGui::Button("Przeci¹gnij mnie!"))
+            ImGui::SetDragDropPayload("DND_DEMO", &payload_data, sizeof(int)); // Ustawienie ³adunku do przeci¹gniêcia
+            //ImGui::Text("Our text");
+        if (ImGui::BeginDragDropSource())
         {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
+            ImGui::Text("Przeci¹ganie...");
+            ImGui::EndDragDropSource();
         }
 
-        // 3. Show another simple window.
-        if (show_another_window)
+        // Miejsce docelowe
+        ImGui::Button(item_dropped ? "Upuszczono!" : "Upuœæ tutaj!");
+        if (ImGui::BeginDragDropTarget())
         {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_DEMO"))
+            {
+                IM_ASSERT(payload->DataSize == sizeof(int));
+                int payload_n = *(const int*)payload->Data;
+                // Teraz mo¿esz u¿ywaæ zmiennej payload_n
+                item_dropped = true;
+            }
+            ImGui::EndDragDropTarget();
         }
 
-        // Rendering
+        ImGui::End();
+
+        // Renderowanie
         ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        // If you are using this code with non-legacy OpenGL header/contexts (which you should not, prefer using imgui_impl_opengl3.cpp!!),
-        // you may need to backup/reset/restore other state, e.g. for current shader using the commented lines below.
-        //GLint last_program;
-        //glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
-        //glUseProgram(0);
         ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
-        //glUseProgram(last_program);
 
-        // Update and Render additional Platform Windows
-        // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
-        //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            GLFWwindow* backup_current_context = glfwGetCurrentContext();
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            glfwMakeContextCurrent(backup_current_context);
-        }
-
-        glfwMakeContextCurrent(window);
         glfwSwapBuffers(window);
     }
 
-    // Cleanup
+    // Czyszczenie
     ImGui_ImplOpenGL2_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

@@ -16,7 +16,6 @@
 #include <primitives.h>
 #include <object.h>
 #include <light.h>
-#include <actor.h>
 // standard template libraries
 #include <fstream>
 #include <sstream>
@@ -78,6 +77,17 @@ int main() {
 
     glViewport(0, 0, screenWidth, screenHeight);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) -> void { glViewport(0, 0, width, height); });
+    const std::vector<Vertex2D> screenVertices = {
+        { {-1.0f, -1.0f},   {0.0f, 0.0f} },
+        { { 1.0f, -1.0f},   {1.0f, 0.0f} },
+        { { 1.0f,  1.0f},   {1.0f, 1.0f} },
+        { {-1.0f,  1.0f},   {0.0f, 1.0f} },
+    };
+
+    const std::vector<uint8_t> screenIndices = {
+        0, 1, 2,
+        2, 3, 0
+    };
 
     std::vector<std::string_view> texture_filenames = {
         CUBEMAP_PATH "right.jpg",
@@ -111,14 +121,14 @@ int main() {
     ObjectLoader<uint16_t> bulbObj(MODELS_PATH "bulb.obj");
 
     const int samples = { 4 };
-    std::shared_ptr<RenderbufferInterface> hdrRenderbuffer(new RenderbufferMultisample(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples));     // here we store depths of each fragment/pixel
-    std::shared_ptr<Texture> hdrTexture(new Texture2DMultisample(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples));   // here we store colours of each fragment/pixel
-    std::shared_ptr<Texture> textureCubeMap(new TextureCubeMap(texture_filenames));
-    std::shared_ptr<Texture> textureImage(new Texture2D(TEXTURES_PATH "drakan.jpg"));
+    RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);     // here we store depths of each fragment/pixel
+    std::shared_ptr<Texture2DMultisample> hdrTexture = std::make_shared<Texture2DMultisample>(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);   // here we store colours of each fragment/pixel
+    std::shared_ptr<TextureCubeMap> textureCubeMap(new TextureCubeMap(texture_filenames));
+    std::shared_ptr<Texture2D> textureImage(new Texture2D(TEXTURES_PATH "drakan.jpg"));
     const int shadowMapWidth = 2048, shadowMapHeight = 2048;
-    std::shared_ptr<Texture> shadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
+    std::shared_ptr<ShadowMap> shadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
 
-    const Mesh<Vertex2D, uint8_t>& screenMesh = { DefaultGeometry::screenVertices, DefaultGeometry::screenIndices };  // also we can create mesh from our own vectors
+    const Mesh<Vertex2D, uint8_t>& screenMesh = { screenVertices, screenIndices };  // also we can create mesh from our own vectors
 
     auto cubeVbo = createVertexBuffer(cubeObj.getMesh().vertices);
     auto cubeIbo = createIndexBuffer(cubeObj.getMesh().indices);
@@ -149,7 +159,6 @@ int main() {
     Object screen;  // screen plane for postprocessing
     screen.addVertexBuffer(screenVbo);
     screen.attachIndexBuffer(screenIbo);
-    screen.addTexture(hdrTexture);
 
     Object cubemap;
     cubemap.addVertexBuffer(cubeVbo);
@@ -159,7 +168,7 @@ int main() {
     Framebuffer hdrFramebuffer({ GL_COLOR_ATTACHMENT0 }, GL_NONE); // framebuffer requires buffers to store colour and depth...
     hdrFramebuffer.use();
     hdrFramebuffer.attach(*hdrTexture, GL_COLOR_ATTACHMENT0);   // we pass colour storage
-    hdrFramebuffer.attach(*hdrRenderbuffer, GL_DEPTH_ATTACHMENT); // we pass depth storage
+    hdrFramebuffer.attach(hdrRenderbuffer, GL_DEPTH_ATTACHMENT); // we pass depth storage
     hdrFramebuffer.isComplete();    // check if everything is fine
 
     Framebuffer shadowFramebuffer({ GL_NONE }, GL_NONE);
@@ -177,6 +186,7 @@ int main() {
     shaderCubeMap.modifyUniform<int>("cubemap", 0);
     shaderCubeMap.modifyUniform<glm::mat4>("projection", camera.getProjectionMatrix());
 
+    screen.addTexture(hdrTexture);
 
     glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), light.getPosition()) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
 

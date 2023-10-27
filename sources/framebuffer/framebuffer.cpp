@@ -28,7 +28,22 @@ void Framebuffer::attach<RenderbufferInterface>(const RenderbufferInterface& rbo
 }
 
 template<>
-void Framebuffer::attach<Texture>(const Texture& texture, unsigned int attachment) {
+void Framebuffer::attach<RenderbufferMultisample>(const RenderbufferMultisample& rbo, unsigned int attachment) {
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, rbo.getId());
+}
+
+template<>
+void Framebuffer::attach<Texture2D>(const Texture2D& texture, unsigned int attachment) {
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture.getType(), texture.getId(), 0);
+}
+
+template<>
+void Framebuffer::attach<Texture2DMultisample>(const Texture2DMultisample& texture, unsigned int attachment) {
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture.getType(), texture.getId(), 0);
+}
+
+template<>
+void Framebuffer::attach<ShadowMap>(const ShadowMap& texture, unsigned int attachment) {
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture.getType(), texture.getId(), 0);
 }
 

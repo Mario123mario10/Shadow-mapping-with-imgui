@@ -32,21 +32,3 @@ struct Mesh {
 	std::vector<IndicesType> indices;
 };
 
-struct AABB {
-	glm::vec3 firstPoint;
-	glm::vec3 secondPoint;
-};
-
-namespace DefaultGeometry {
-	const std::vector<Vertex2D> screenVertices = {
-		{ {-1.0f, -1.0f},   {0.0f, 0.0f} },
-		{ { 1.0f, -1.0f},   {1.0f, 0.0f} },
-		{ { 1.0f,  1.0f},   {1.0f, 1.0f} },
-		{ {-1.0f,  1.0f},   {0.0f, 1.0f} },
-	};
-
-	const std::vector<uint8_t> screenIndices = {
-		0, 1, 2,
-		2, 3, 0
-	};
-}
