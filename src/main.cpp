@@ -196,6 +196,7 @@ int main() {
     shader.modifyUniform<float>("light.quadratic", light.getAttenuationQuadraticFactor());
     shader.modifyUniform<int>("diffuseTexture", 0);
     shader.modifyUniform<int>("shadowMap", 1);
+
     float last = 0.0f;
     while (!glfwWindowShouldClose(window)) {
         float deltaTime = glfwGetTime() - last;

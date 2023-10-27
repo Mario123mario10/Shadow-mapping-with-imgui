@@ -21,15 +21,21 @@ Shader::~Shader() {
     glDeleteProgram(program);
 }
 
+void cutLastCharacter(std::string& word, uint8_t sign) {
+    if (word[word.size() - 1] == sign)
+        word = word.substr(0, word.size() - 1);
+}
+
+const static std::array<std::string, 37> typesDict = { 
+     "float", "double", "int", "uint", "bool", "vec2", "vec3", "vec4", "ivec2", "ivec3", "ivec4",
+     "bvec2", "bvec3", "bvec4", "mat2", "mat3", "mat4", "sampler1D", "sampler2D",
+     "sampler3D", "samplerCube", "sampler1DShadow", "sampler2DShadow",
+     "samplerCubeShadow", "mat2x2", "mat2x3", "mat2x4", "mat3x2", "mat3x3",
+     "mat3x4", "mat4x2", "mat4x3", "mat4x4", "sampler2DRect", "samplerBuffer",
+     "sampler2DMS", "sampler2DMSArray" 
+};
+
 void Shader::checkForStruct(std::string line, std::string& currentStruct) {
-    const static std::array<std::string, 37> typesDict = { 
-        "float", "double", "int", "uint", "bool", "vec2", "vec3", "vec4", "ivec2", "ivec3", "ivec4",
-        "bvec2", "bvec3", "bvec4", "mat2", "mat3", "mat4", "sampler1D", "sampler2D",
-        "sampler3D", "samplerCube", "sampler1DShadow", "sampler2DShadow",
-        "samplerCubeShadow", "mat2x2", "mat2x3", "mat2x4", "mat3x2", "mat3x3",
-        "mat3x4", "mat4x2", "mat4x3", "mat4x4", "sampler2DRect", "samplerBuffer",
-        "sampler2DMS", "sampler2DMSArray" 
-    };
     std::stringstream ss;
     if (line.find("//") != std::string::npos)
         return;
@@ -38,8 +44,7 @@ void Shader::checkForStruct(std::string line, std::string& currentStruct) {
         while(line != "struct")
             ss >> line;
         ss >> line;
-        if (line[line.size() - 1] == '{')
-            line = line.substr(0, line.size() - 1);
+        cutLastCharacter(line, '{');
         structFields.insert({ line, {} });
         currentStruct = line;
     }
@@ -52,22 +57,13 @@ void Shader::checkForStruct(std::string line, std::string& currentStruct) {
         if (std::any_of(typesDict.cbegin(), typesDict.cend(), [&line](const std::string& type) { return type == line; })) {
             std::string type = line;
             ss >> line;
-            if(line[line.size() - 1] == ';')
-                line = line.substr(0, line.size() - 1);
+            cutLastCharacter(line, ';');
             structFields[currentStruct].emplace_back(type, line);
         }
     }
 }
 
 void Shader::checkForUniforms(std::string line) {
-    const static std::array<std::string, 37> typesDict = {
-        "float", "double", "int", "uint", "bool", "vec2", "vec3", "vec4", "ivec2", "ivec3", "ivec4",
-        "bvec2", "bvec3", "bvec4", "mat2", "mat3", "mat4", "sampler1D", "sampler2D",
-        "sampler3D", "samplerCube", "sampler1DShadow", "sampler2DShadow",
-        "samplerCubeShadow", "mat2x2", "mat2x3", "mat2x4", "mat3x2", "mat3x3",
-        "mat3x4", "mat4x2", "mat4x3", "mat4x4", "sampler2DRect", "samplerBuffer",
-        "sampler2DMS", "sampler2DMSArray"
-    };
     std::stringstream ss;
     if (line.find("//") != std::string::npos)
         return;
@@ -75,12 +71,11 @@ void Shader::checkForUniforms(std::string line) {
         ss << line;
         while (line != "uniform")
             ss >> line;
-        ss >> line; // type
+        ss >> line;
         std::string type = line;
         ss >> line;
         std::string variable = line;
-        if (variable[variable.size() - 1] == ';')
-            variable = variable.substr(0, variable.size() - 1);
+        cutLastCharacter(variable, ';');
         if (std::none_of(typesDict.cbegin(), typesDict.cend(), [&type](const std::string& glslType) { return type == glslType; })) {
             const auto& structVars = structFields[type];
             for (const auto& var : structVars) {

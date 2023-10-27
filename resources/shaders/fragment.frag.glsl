@@ -8,7 +8,7 @@ in vec4 lightFragPos;
 
 out vec4 outColor;
 
-struct Light {
+struct Light { 
     vec3 position;  
   
 //    vec3 ambient;
