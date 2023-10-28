@@ -11,81 +11,35 @@
 
 Shader::Shader(const std::string& vertexShaderPath, const std::string fragmentShaderPath, const std::string& geometryShaderPath) {
     createProgram(vertexShaderPath, fragmentShaderPath, geometryShaderPath);
+  
     glUseProgram(program);
-    for (auto& uniform : uniformLocations) {
-        uniform.second = glGetUniformLocation(program, uniform.first.c_str());
+
+    int count;
+    glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
+    uniforms.resize(count);
+
+    std::array<char, BUFFER_SIZE> data;
+    int length;
+    for (unsigned int i = 0; i < count; i++) {
+        auto& uniform = uniforms[i];
+        glGetActiveUniform(program, i, BUFFER_SIZE, &length, &uniform.size, &uniform.type, data.data());
+        uniform.name = std::string(data.data());
+        uniformLocations.insert({ uniform.name, glGetUniformLocation(program, uniform.name.c_str()) });
+    }
+
+    glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &count);
+    attributes.resize(count);
+
+    // TODO create helper function
+    for (unsigned int i = 0; i < count; i++) {
+        auto& attribute = attributes[i];
+        glGetActiveUniform(program, i, BUFFER_SIZE, &length, &attribute.size, &attribute.type, data.data());
+        attribute.name = std::string(data.data());
     }
 }
 
 Shader::~Shader() {
     glDeleteProgram(program);
-}
-
-void cutLastCharacter(std::string& word, uint8_t sign) {
-    if (word[word.size() - 1] == sign)
-        word = word.substr(0, word.size() - 1);
-}
-
-const static std::array<std::string, 37> typesDict = { 
-     "float", "double", "int", "uint", "bool", "vec2", "vec3", "vec4", "ivec2", "ivec3", "ivec4",
-     "bvec2", "bvec3", "bvec4", "mat2", "mat3", "mat4", "sampler1D", "sampler2D",
-     "sampler3D", "samplerCube", "sampler1DShadow", "sampler2DShadow",
-     "samplerCubeShadow", "mat2x2", "mat2x3", "mat2x4", "mat3x2", "mat3x3",
-     "mat3x4", "mat4x2", "mat4x3", "mat4x4", "sampler2DRect", "samplerBuffer",
-     "sampler2DMS", "sampler2DMSArray" 
-};
-
-void Shader::checkForStruct(std::string line, std::string& currentStruct) {
-    std::stringstream ss;
-    if (line.find("//") != std::string::npos)
-        return;
-    if (line.find("struct") != std::string::npos) {
-        ss << line;
-        while(line != "struct")
-            ss >> line;
-        ss >> line;
-        cutLastCharacter(line, '{');
-        structFields.insert({ line, {} });
-        currentStruct = line;
-    }
-    else if (!currentStruct.empty() && line.find("}") != std::string::npos) {
-        currentStruct.clear();
-    }
-    else if (!currentStruct.empty()) {
-        ss << line;
-        ss >> line;
-        if (std::any_of(typesDict.cbegin(), typesDict.cend(), [&line](const std::string& type) { return type == line; })) {
-            std::string type = line;
-            ss >> line;
-            cutLastCharacter(line, ';');
-            structFields[currentStruct].emplace_back(type, line);
-        }
-    }
-}
-
-void Shader::checkForUniforms(std::string line) {
-    std::stringstream ss;
-    if (line.find("//") != std::string::npos)
-        return;
-    if (line.find("uniform") != std::string::npos) {
-        ss << line;
-        while (line != "uniform")
-            ss >> line;
-        ss >> line;
-        std::string type = line;
-        ss >> line;
-        std::string variable = line;
-        cutLastCharacter(variable, ';');
-        if (std::none_of(typesDict.cbegin(), typesDict.cend(), [&type](const std::string& glslType) { return type == glslType; })) {
-            const auto& structVars = structFields[type];
-            for (const auto& var : structVars) {
-                uniformLocations.insert({ variable + '.' + var.second, -1 });
-            }
-        }
-        else {
-            uniformLocations.insert({ variable, -1 });
-        }
-    }
 }
 
 std::string Shader::parseShader(const std::string& path) {
@@ -95,8 +49,6 @@ std::string Shader::parseShader(const std::string& path) {
     std::string currentStruct;
     while (getline(source, line)) {
         file << line << '\n';
-        checkForStruct(line, currentStruct);
-        checkForUniforms(line);
     }
     return file.str();
 }

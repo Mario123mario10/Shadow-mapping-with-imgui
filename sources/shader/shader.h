@@ -6,9 +6,18 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
+#include <array>
 
 class Shader {
-    std::unordered_map<std::string, std::vector<std::pair<std::string, std::string>>> structFields;
+    static constexpr int BUFFER_SIZE = 32;
+    struct Uniform {
+        std::string name;
+        unsigned int type;
+        int size;
+    };
+    using Attribute = Uniform;
+    std::vector<Uniform> uniforms;
+    std::vector<Attribute> attributes;
     mutable std::unordered_map<std::string, int> uniformLocations;
     unsigned int program;
 public:
@@ -22,8 +31,6 @@ public:
     void modifyUniform(const std::string& name, const T& uniformVariable) const;
 private:
     std::string parseShader(const std::string& path);
-    void checkForStruct(std::string line, std::string& currentStruct);
-    void checkForUniforms(std::string line);
     unsigned int compileShader(const std::string& path, int shaderType);
     void createProgram(const std::string& vertexPath, const std::string& fragmentPath, const std::string& geometryShaderPath);
     void createProgram(const std::string& computePath);
