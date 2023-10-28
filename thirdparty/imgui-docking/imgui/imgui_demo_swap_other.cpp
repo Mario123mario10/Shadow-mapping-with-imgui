@@ -96,35 +96,31 @@ void ImGui::ShowDemoWindow(bool* p_open, char* name)
                 IM_ASSERT(payload->DataSize == sizeof(int));
                 int payload_n = *(const int*)payload->Data;
                 std::cout << (payload_n) << std::endl;
-                const char** namesO = names;
-
+                //const char* namesO = names;
                 if ((payload_n >= namesSize) != (!strcmp(name, "b")))
                 {
-                    namesO = namesOther;
-                }
-                
 
-                std::cout << (payload_n) << std::endl;
-                payload_n %= namesSize;
-                std::cout << (payload_n) << std::endl;
+                    std::cout << (payload_n) << std::endl;
+                    payload_n %= namesSize;
+                    std::cout << (payload_n) << std::endl;
 
-                if (mode == Mode_Copy)
-                {
-                    names[n] = names[payload_n];
-                }
-                if (mode == Mode_Move)
-                {
-                    names[n] = names[payload_n];
-                    names[payload_n] = "";
-                }
-                if (mode == Mode_Swap)
-                {
+                    if (mode == Mode_Copy)
+                    {
+                        names[n] = names[payload_n];
+                    }
+                    if (mode == Mode_Move)
+                    {
+                        names[n] = names[payload_n];
+                        names[payload_n] = "";
+                    }
+                    if (mode == Mode_Swap)
+                    {
                         
-                    const char* tmp = names[n];
-                    names[n] = namesO[payload_n];
-                    namesO[payload_n] = tmp;
+                        const char* tmp = names[n];
+                        names[n] = namesOther[payload_n];
+                        namesOther[payload_n] = tmp;
+                    }
                 }
-                
                 
             }
             ImGui::EndDragDropTarget();
