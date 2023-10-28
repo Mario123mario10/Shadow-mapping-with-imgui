@@ -2,11 +2,6 @@
 
 #include "vertex_buffer.h"
 
-//template<typename T>
-//void VertexBufferLayout::addLayoutElement(int count, bool instanced) {
-//    static_assert(false, "Wrong type");
-//}
-
 template<>
 void VertexBufferLayout::addLayoutElement<char>(int count, bool instanced) {
     elements.push_back({ GL_BYTE, sizeof(char), count, GL_TRUE, instanced });

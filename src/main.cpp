@@ -109,8 +109,8 @@ int main() {
     Shader shaderShadow(SHADERS_PATH "shadowmap.vert.glsl", SHADERS_PATH "shadowmap.frag.glsl");
     ObjectLoader<uint8_t> cubeObj(MODELS_PATH "cube.obj");  // only loads mesh from .obj file
     ObjectLoader<uint16_t> bulbObj(MODELS_PATH "bulb.obj");
-
-    const int samples = { 4 };
+    
+    const int samples = { 1 };
     std::shared_ptr<RenderbufferInterface> hdrRenderbuffer(new RenderbufferMultisample(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples));     // here we store depths of each fragment/pixel
     std::shared_ptr<Texture> hdrTexture(new Texture2DMultisample(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples));   // here we store colours of each fragment/pixel
     std::shared_ptr<Texture> textureCubeMap(new TextureCubeMap(texture_filenames));
@@ -196,7 +196,7 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         float deltaTime = glfwGetTime() - last;
         last = glfwGetTime();
-
+        std::cout << 1.0f / deltaTime << std::endl;
         glfwPollEvents();
         processInput(window, camera, deltaTime);
 

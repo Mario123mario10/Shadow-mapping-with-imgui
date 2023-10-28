@@ -17,11 +17,6 @@ Framebuffer::~Framebuffer() {
 	glDeleteFramebuffers(1, &id);
 }
 
-//template<typename T>
-//void Framebuffer::attach(const T& object, unsigned int attachment) {
-//	static_assert(false, "Unrecognized type for shadow!");
-//}
-
 template<>
 void Framebuffer::attach<RenderbufferInterface>(const RenderbufferInterface& rbo, unsigned int attachment) {
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, rbo.getId());

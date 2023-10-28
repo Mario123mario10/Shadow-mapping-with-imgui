@@ -18,7 +18,7 @@ Shader::Shader(const std::string& vertexShaderPath, const std::string fragmentSh
     glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
     uniforms.resize(count);
 
-    std::array<char, BUFFER_SIZE> data;
+    std::array<GLchar, BUFFER_SIZE> data;
     int length;
     for (unsigned int i = 0; i < count; i++) {
         auto& uniform = uniforms[i];
@@ -111,65 +111,34 @@ void Shader::createProgram(const std::string& vertexPath, const std::string& fra
     linkValidateError();
 }
 
-//template<typename T>
-//void Shader::modifyUniform(const std::string& name, const T& uniformVariable) const {
-//    static_assert(false, "Unrecognized uniform variable!");
-//}
-
-// #define uniform
-
 template<>
 void Shader::modifyUniform<glm::mat4>(const std::string& name, const glm::mat4& matrix) const {
-#ifdef uniform
     glUniformMatrix4fv(uniformLocations[name], 1, GL_FALSE, glm::value_ptr(matrix));
-#else
-    glUniformMatrix4fv(glGetUniformLocation(program, name.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
-#endif 
 }
 
 template<>
 void Shader::modifyUniform<glm::mat3>(const std::string& name, const glm::mat3& matrix) const {
-#ifdef uniform
     glUniformMatrix3fv(uniformLocations[name], 1, GL_FALSE, glm::value_ptr(matrix));
-#else
-    glUniformMatrix3fv(glGetUniformLocation(program, name.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
-#endif 
 }
 
 template<>
 void Shader::modifyUniform<glm::vec3>(const std::string& name, const glm::vec3& vector) const {
-#ifdef uniform
     glUniform3f(uniformLocations[name], vector.x, vector.y, vector.z);
-#else
-    glUniform3f(glGetUniformLocation(program, name.c_str()), vector.x, vector.y, vector.z);
-#endif
 }
 
 template<>
 void Shader::modifyUniform<int>(const std::string& name, const int& number) const {
-#ifdef uniform
     glUniform1i(uniformLocations[name], number);
-#else
-    glUniform1i(glGetUniformLocation(program, name.c_str()), number);
-#endif
 }
 
 template<>
 void Shader::modifyUniform<float>(const std::string& name, const float& number) const {
-#ifdef uniform
     glUniform1f(uniformLocations[name], number);
-#else
-    glUniform1f(glGetUniformLocation(program, name.c_str()), number);
-#endif
 }
 
 template<>
 void Shader::modifyUniform<bool>(const std::string& name, const bool& term) const {
-#ifdef uniform
     glUniform1i(uniformLocations[name], term);
-#else
-    glUniform1i(glGetUniformLocation(program, name.c_str()), term);
-#endif
 }
 
 unsigned int Shader::getProgram() const {
