@@ -40,9 +40,10 @@ int Texture2DMultisample::getSamplesNumber() const {
     return samples;
 }
 
-void helperSetTextureFormat(unsigned int* format, unsigned int* internalFormat, int nrChannels) {
+static void helperSetTextureFormat(unsigned int* format, unsigned int* internalFormat, int nrChannels) {
     enum {
         R = 1,
+        RG = 2,
         RGB = 3,
         RGBA = 4
     };
@@ -52,6 +53,10 @@ void helperSetTextureFormat(unsigned int* format, unsigned int* internalFormat, 
     case R:
         *internalFormat = GL_RED;
         *format = GL_RED;
+        break;
+    case RG:
+        *internalFormat = GL_RG8;
+        *format = GL_RG;
         break;
     case RGB:
         *internalFormat = GL_RGB8;
@@ -140,8 +145,8 @@ ShadowMap::ShadowMap(int width, int height, int internalFormat) : Texture(GL_TEX
 ShadowCubeMap::ShadowCubeMap(int width, int height, int internalFormat) : Texture(GL_TEXTURE_CUBE_MAP) {
     glBindTexture(type, id);
     glTexStorage2D(type, 1, internalFormat, width, height);
-    glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(type, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);

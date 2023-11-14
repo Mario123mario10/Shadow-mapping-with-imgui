@@ -1,4 +1,4 @@
-#version 330 core
+#version 450 core
 
 in vec3 fragPos;
 in vec2 texCoords;
@@ -7,6 +7,16 @@ in vec3 outNormal;
 in vec4 lightFragPos;
 
 out vec4 outColor;
+
+uniform Lights {
+    vec4 a;
+    int b;
+};
+
+uniform Mights {
+    vec4 c;
+    int d;
+};
 
 struct Light { 
     vec3 position;  
@@ -27,6 +37,13 @@ const ivec2 offsets[] = ivec2[](
 	ivec2(-1, -1), ivec2(0, -1), ivec2(1, -1)
 );
 
+const vec2 off[] = vec2[](
+    vec2(2.0, -2.0 / 2048.0), vec2(2.0, 0.0), vec2(2.0, 2.0 / 2048.0),
+    vec2(0.0, -2.0 / 2048.0), vec2(0.0, 0.0), vec2(0.0, 2.0 / 2048.0),
+    vec2(-2.0, -2.0 / 2048.0), vec2(-2.0, 0.0), vec2(-2.0, 2.0 / 2048.0)
+);
+
+
 uniform vec3 lightColor;
 uniform vec3 viewPos;
 uniform Light light;
@@ -42,6 +59,10 @@ float calculateShadow() {
     for(int i = 0; i < KELNER_SIZE; i++) {
         sum += textureOffset(shadowMap, lightFrag.xyz, offsets[i]);
     }
+//    sum = 0.0;
+//    for(int i = 0; i < 9; i++) {
+//        sum += dot(textureGather(shadowMap, lightFrag.xy + 0.5*off[i], lightFrag.z), vec4(1.0, 1.0, 1.0, 1.0));
+//    }
     return sum / KELNER_SIZE;
 }
 

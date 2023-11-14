@@ -33,8 +33,20 @@ Shader::Shader(const std::string& vertexShaderPath, const std::string fragmentSh
     // TODO create helper function
     for (unsigned int i = 0; i < count; i++) {
         auto& attribute = attributes[i];
-        glGetActiveUniform(program, i, BUFFER_SIZE, &length, &attribute.size, &attribute.type, data.data());
+        glGetActiveAttrib(program, i, BUFFER_SIZE, &length, &attribute.size, &attribute.type, data.data());
         attribute.name = std::string(data.data());
+    }
+
+    glGetProgramiv(program, GL_ACTIVE_UNIFORM_BLOCKS, &count);
+
+    for (unsigned int i = 0; i < count; i++) {
+        int size;
+        glGetActiveUniformBlockiv(program, i, GL_UNIFORM_BLOCK_NAME_LENGTH, &length);
+        glGetActiveUniformBlockName(program, i, length, nullptr, data.data());
+        std::string blockName = std::string(data.data());
+        auto& uniformBlock = uniformBlocks[blockName];
+        glGetActiveUniformBlockiv(program, i, GL_UNIFORM_BLOCK_DATA_SIZE, &uniformBlock.size);
+        uniformBlock.index = glGetUniformBlockIndex(program, blockName.c_str());
     }
 }
 
@@ -112,37 +124,41 @@ void Shader::createProgram(const std::string& vertexPath, const std::string& fra
 }
 
 template<>
-void Shader::modifyUniform<glm::mat4>(const std::string& name, const glm::mat4& matrix) const {
+void Shader::modifyUniform<glm::mat4>(const std::string& name, const glm::mat4& matrix) {
     glUniformMatrix4fv(uniformLocations[name], 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
 template<>
-void Shader::modifyUniform<glm::mat3>(const std::string& name, const glm::mat3& matrix) const {
+void Shader::modifyUniform<glm::mat3>(const std::string& name, const glm::mat3& matrix) {
     glUniformMatrix3fv(uniformLocations[name], 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
 template<>
-void Shader::modifyUniform<glm::vec3>(const std::string& name, const glm::vec3& vector) const {
+void Shader::modifyUniform<glm::vec3>(const std::string& name, const glm::vec3& vector) {
     glUniform3f(uniformLocations[name], vector.x, vector.y, vector.z);
 }
 
 template<>
-void Shader::modifyUniform<int>(const std::string& name, const int& number) const {
+void Shader::modifyUniform<int>(const std::string& name, const int& number) {
     glUniform1i(uniformLocations[name], number);
 }
 
 template<>
-void Shader::modifyUniform<float>(const std::string& name, const float& number) const {
+void Shader::modifyUniform<float>(const std::string& name, const float& number) {
     glUniform1f(uniformLocations[name], number);
 }
 
 template<>
-void Shader::modifyUniform<bool>(const std::string& name, const bool& term) const {
+void Shader::modifyUniform<bool>(const std::string& name, const bool& term) {
     glUniform1i(uniformLocations[name], term);
 }
 
 unsigned int Shader::getProgram() const {
     return program;
+}
+
+const Shader::UniformBlock& Shader::getUniformBlock(const std::string& name) {
+    return uniformBlocks[name];
 }
 
 void Shader::use() const {

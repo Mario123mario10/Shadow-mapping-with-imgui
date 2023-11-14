@@ -24,6 +24,8 @@
 #include <random>
 #include <iostream>
 #include <chrono>
+#include <thread>
+#include <future>
 
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
 
@@ -43,6 +45,11 @@ std::shared_ptr<IndexBuffer> createIndexBuffer(std::vector<T> data) {
     ibo->use();
     ibo->parseElementData(data);
     return ibo;
+}
+
+template<typename T>
+std::shared_ptr<ObjectLoader<T>> create(const std::string path) {
+    return std::shared_ptr<ObjectLoader<T>>(new ObjectLoader<T>(path));
 }
 
 int main() {
@@ -110,12 +117,12 @@ int main() {
     ObjectLoader<uint8_t> cubeObj(MODELS_PATH "cube.obj");  // only loads mesh from .obj file
     ObjectLoader<uint16_t> bulbObj(MODELS_PATH "bulb.obj");
     
-    const int samples = { 1 };
+    const int samples = { 8 };
     std::shared_ptr<RenderbufferInterface> hdrRenderbuffer(new RenderbufferMultisample(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples));     // here we store depths of each fragment/pixel
     std::shared_ptr<Texture> hdrTexture(new Texture2DMultisample(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples));   // here we store colours of each fragment/pixel
     std::shared_ptr<Texture> textureCubeMap(new TextureCubeMap(texture_filenames));
     std::shared_ptr<Texture> textureImage(new Texture2D(TEXTURES_PATH "drakan.jpg"));
-    const int shadowMapWidth = 2048, shadowMapHeight = 2048;
+    const int shadowMapWidth = 1024, shadowMapHeight = 1024;
     std::shared_ptr<Texture> shadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
 
     const Mesh<Vertex2D, uint8_t>& screenMesh = { DefaultGeometry::screenVertices, DefaultGeometry::screenIndices };  // also we can create mesh from our own vectors
@@ -193,10 +200,11 @@ int main() {
     shader.modifyUniform<int>("shadowMap", 1);
 
     float last = 0.0f;
+    glPolygonOffset(1.7f, 3.5f);
     while (!glfwWindowShouldClose(window)) {
         float deltaTime = glfwGetTime() - last;
         last = glfwGetTime();
-        std::cout << 1.0f / deltaTime << std::endl;
+        // std::cout << 1.0f / deltaTime << std::endl;
         glfwPollEvents();
         processInput(window, camera, deltaTime);
 
@@ -211,7 +219,6 @@ int main() {
         shaderShadow.modifyUniform<glm::mat4>("PV", lightPV);
         shaderShadow.modifyUniform<bool>("instanced", true);
         glEnable(GL_POLYGON_OFFSET_FILL);
-        glPolygonOffset(1.7f, 3.0f);
         cubes.renderGeometry();
         glDisable(GL_POLYGON_OFFSET_FILL);
 
