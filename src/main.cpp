@@ -54,7 +54,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    int screenWidth = 1920, screenHeight = 1080;
+    int screenWidth = 3840, screenHeight = 2400;
     GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Interpolated Triangle with Shaders", NULL, NULL);
     if (!window) {
         std::cerr << "Failed to create GLFW window." << std::endl;
@@ -189,28 +189,34 @@ int main() {
     screen.addTexture(hdrTexture);
 
     glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), light.getPosition()) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+    const glm::mat4 lightPV = light.getProjectionMatrix() * light.getViewMatrix();
 
     camera.setMovementSpeed(7.0f);
     camera.setMouseSpeed(0.05f);
 
     shader.use();
+    shader.modifyUniform<glm::mat4>("LightProjViewMat[0]", lightPV);    // the same matrix as in here ***
     shader.modifyUniform<glm::vec3>("lightColor", light.getColor());
     // point light
-    shader.modifyUniform<glm::vec3>("light.position", light.getPosition());
-    shader.modifyUniform<float>("light.constant", light.getAttenuationConstantFactor());
-    shader.modifyUniform<float>("light.linear", light.getAttenuationLinearFactor());
-    shader.modifyUniform<float>("light.quadratic", light.getAttenuationQuadraticFactor());
+    shader.modifyUniform<glm::vec3>("light[0].position", light.getPosition());
+    shader.modifyUniform<glm::vec3>("light[0].color", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.modifyUniform<float>("light[0].constant", light.getAttenuationConstantFactor());
+    shader.modifyUniform<float>("light[0].linear", light.getAttenuationLinearFactor());
+    shader.modifyUniform<float>("light[0].quadratic", light.getAttenuationQuadraticFactor());
+    shader.modifyUniform<int>("light[0].shadowIndex", 0);   // *** index of LightProjViewMat
     shader.modifyUniform<int>("numPointLights", 1);
     // direcitonal lights
-    shader.modifyUniform<glm::vec3>("dirlight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
-    shader.modifyUniform<glm::vec3>("dirlight.ambient", glm::vec3(0.05f, 0.05f, 0.05f));
-    shader.modifyUniform<glm::vec3>("dirlight.diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
-    shader.modifyUniform<glm::vec3>("dirlight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    shader.modifyUniform<glm::vec3>("dirlight[0].direction", glm::vec3(-0.2f, -1.0f, -0.3f));
+    shader.modifyUniform<glm::vec3>("dirlight[0].color", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.modifyUniform<glm::vec3>("dirlight[0].ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+    shader.modifyUniform<glm::vec3>("dirlight[0].diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
+    shader.modifyUniform<glm::vec3>("dirlight[0].specular", glm::vec3(0.5f, 0.5f, 0.5f));
     shader.modifyUniform<int>("numDirLights", 0);
     // spotlight
     shader.modifyUniform<glm::vec3>("spotlight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
     shader.modifyUniform<glm::vec3>("spotlight.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
     shader.modifyUniform<glm::vec3>("spotlight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.modifyUniform<glm::vec3>("spotlight.color", glm::vec3(1.0f, 1.0f, 1.0f));
     shader.modifyUniform<float>("spotlight.constant", light.getAttenuationConstantFactor());
     shader.modifyUniform<float>("spotlight.linear", light.getAttenuationLinearFactor());
     shader.modifyUniform<float>("spotlight.quadratic", light.getAttenuationQuadraticFactor());
@@ -229,7 +235,6 @@ int main() {
         processInput(window, camera, deltaTime);
 
         const glm::mat4 cameraPV = camera.getProjectionMatrix() * camera.getViewMatrix();
-        const glm::mat4 lightPV = light.getProjectionMatrix() * light.getViewMatrix();
         // shadow depth map
         shadowFramebuffer.use();
         glViewport(0, 0, shadowMapWidth, shadowMapHeight);
@@ -253,7 +258,6 @@ int main() {
         // draw instanced cubes
         shader.use();
         shader.modifyUniform<glm::mat4>("ProjViewMat", cameraPV);
-        shader.modifyUniform<glm::mat4>("LightProjViewMat", lightPV);
         shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
         cubes.render();
 
