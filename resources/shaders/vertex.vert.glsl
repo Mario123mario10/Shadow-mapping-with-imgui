@@ -9,12 +9,17 @@ out vec3 fragPos;
 out vec2 texCoords;
 out vec3 outNormal;
 
+const int maxNumLights = 9;
+
 out vec4 lightFragPos;
 
 uniform mat4 PVM;
 // uniform mat4 umodel;
 uniform mat4 ProjViewMat;
 uniform mat4 LightProjViewMat;
+
+uniform int numPointLights;
+uniform int numDirLights;
 
 const mat4 BiasMat = mat4(
 	0.5, 0, 0, 0,
@@ -25,7 +30,9 @@ const mat4 BiasMat = mat4(
 
 void main() {
     fragPos = vec3(ModelMat * vec4(position, 1.0));
-	lightFragPos = BiasMat * LightProjViewMat * vec4(fragPos, 1.0);
+	for(int i = 0; i < numPointLights + numDirLights; i++) {
+		lightFragPos = BiasMat * LightProjViewMat * vec4(fragPos, 1.0);
+	}
     outNormal = mat3(transpose(inverse(ModelMat))) * normal;
     texCoords = textureCoords;
     gl_Position = ProjViewMat * vec4(fragPos, 1.0);

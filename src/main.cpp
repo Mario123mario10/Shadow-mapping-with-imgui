@@ -200,11 +200,13 @@ int main() {
     shader.modifyUniform<float>("light.constant", light.getAttenuationConstantFactor());
     shader.modifyUniform<float>("light.linear", light.getAttenuationLinearFactor());
     shader.modifyUniform<float>("light.quadratic", light.getAttenuationQuadraticFactor());
+    shader.modifyUniform<int>("numPointLights", 1);
     // direcitonal lights
     shader.modifyUniform<glm::vec3>("dirlight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
     shader.modifyUniform<glm::vec3>("dirlight.ambient", glm::vec3(0.05f, 0.05f, 0.05f));
     shader.modifyUniform<glm::vec3>("dirlight.diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
     shader.modifyUniform<glm::vec3>("dirlight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    shader.modifyUniform<int>("numDirLights", 0);
     // spotlight
     shader.modifyUniform<glm::vec3>("spotlight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
     shader.modifyUniform<glm::vec3>("spotlight.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
@@ -214,6 +216,7 @@ int main() {
     shader.modifyUniform<float>("spotlight.quadratic", light.getAttenuationQuadraticFactor());
     shader.modifyUniform<float>("spotlight.cutOff", glm::cos(glm::radians(12.5)));
     shader.modifyUniform<float>("spotlight.outerCutOff", glm::cos(glm::radians(17.5)));
+
     shader.modifyUniform<int>("diffuseTexture", 0);
     shader.modifyUniform<int>("shadowMap", 1);
 

@@ -4,11 +4,16 @@ in vec3 fragPos;
 in vec2 texCoords;
 in vec3 outNormal;
 
+const int maxNumLights = 9;
+const int maxNumDirPointLights = 3;
+
 in vec4 lightFragPos;
 
 out vec4 outColor;
 
 struct PointLight {
+    int shadowIndex;
+
     vec3 position;  
   
 //    vec3 ambient;
@@ -18,17 +23,25 @@ struct PointLight {
     float constant;
     float linear;
     float quadratic;
+
+    vec3 color;
 }; 
 
 struct DirLight {
+    int shadowIndex;
+
     vec3 direction;
 
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+
+    vec3 color;
 };
 
 struct Spotlight {
+    int shadowIndex;
+
     vec3 position;
     vec3 direction;
     float cutOff;
@@ -41,6 +54,8 @@ struct Spotlight {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+
+    vec3 color;
 };
 
 const int KELNER_SIZE = 9;  // size of offsets
@@ -52,8 +67,13 @@ const ivec2 offsets[] = ivec2[](
 
 uniform vec3 lightColor;
 uniform vec3 viewPos;
+
+uniform int numPointLights;
 uniform PointLight light;
+
+uniform int numDirLights;
 uniform DirLight dirLight;
+
 uniform Spotlight spotlight;
 
 uniform sampler2D diffuseTexture;
