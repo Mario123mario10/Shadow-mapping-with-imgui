@@ -56,6 +56,8 @@ public:
 	glm::mat4 getViewMatrix() const;
 	const glm::vec3& getPosition() const;
 	void setViewDirection(float x, float y, float z);
+	void setViewDirection(const glm::vec3& viewDir);
+	const glm::vec3& getViewDirection() const;
 };
 
 class OrthographicLight : public Light {
@@ -67,19 +69,17 @@ public:
 	glm::mat4 getViewMatrix() const;
 	const glm::vec3& getPosition() const;
 	void setViewDirection(float x, float y, float z);
+	void setViewDirection(const glm::vec3& viewDir);
+	const glm::vec3& getViewDirection() const;
 };
 
 class SpotLight : public PerspectiveLight {
 	float innerCutOff;
 	float outerCutOff;
-	glm::vec3 viewDirection;
 public:
 	SpotLight(float fovy, float aspectRatio, float zNear, float zFar);
 	void setInnerCutOff(float cutoff);
 	void setOuterCutOff(float cutoff);
-	void setViewDirection(float x, float y, float z);
-	void setViewDirection(const glm::vec3& viewDir);
 	float getInnerCutOff() const;
 	float getOuterCutOff() const;
-	const glm::vec3& getViewDirection() const;
 };
