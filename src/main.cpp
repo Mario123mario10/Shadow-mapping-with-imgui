@@ -149,8 +149,8 @@ int main() {
     cubes.addVertexBuffer(cubeVbo); // first vertex buffer which stores mesh of the cube
     cubes.attachIndexBuffer(cubeIbo);
     cubes.addVertexBuffer(createVertexBuffer(models, true));    // second vertex buffer which stores model matrices of our cubes held in "cubes" variable
-    cubes.addTexture(textureImage);
-    cubes.addTexture(shadowMap);
+    cubes.addTexture(textureImage); // index 0
+    cubes.addTexture(shadowMap);    // index 1
 
     Object bulb;    // regular cube object
     bulb.addVertexBuffer(bulbVbo);
@@ -205,14 +205,8 @@ int main() {
     shader.modifyUniform<float>("light[0].quadratic", light.getAttenuationQuadraticFactor());
     shader.modifyUniform<int>("light[0].shadowIndex", 0);   // *** index of LightProjViewMat
     shader.modifyUniform<int>("numPointLights", 1);
-    // direcitonal lights
-    shader.modifyUniform<glm::vec3>("dirlight[0].direction", glm::vec3(-0.2f, -1.0f, -0.3f));
-    shader.modifyUniform<glm::vec3>("dirlight[0].color", glm::vec3(1.0f, 1.0f, 1.0f));
-    shader.modifyUniform<glm::vec3>("dirlight[0].ambient", glm::vec3(0.05f, 0.05f, 0.05f));
-    shader.modifyUniform<glm::vec3>("dirlight[0].diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
-    shader.modifyUniform<glm::vec3>("dirlight[0].specular", glm::vec3(0.5f, 0.5f, 0.5f));
-    shader.modifyUniform<int>("numDirLights", 0);
     // spotlight
+    // nie podawaæ tych wektorów z palca tylko poprzez light.color, light.attenuation itd. tak jak wy¿ej
     shader.modifyUniform<glm::vec3>("spotlight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
     shader.modifyUniform<glm::vec3>("spotlight.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
     shader.modifyUniform<glm::vec3>("spotlight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
