@@ -144,6 +144,9 @@ int main() {
     light.setViewDirection(0.0f, 0.0f, -1.0f);
     light.setColor(1.0f, 1.0f, 1.0f);
     light.setAttenuation(1.0f, 0.09f, 0.032f);
+    light.setAmbient(0.0f, 0.0f, 0.0f);
+    light.setDiffuse(1.0f, 1.0f, 1.0f);
+    light.setSpecular(1.0f, 1.0f, 1.0f);
 
     ObjectInstanced cubes(instances);
     cubes.addVertexBuffer(cubeVbo); // first vertex buffer which stores mesh of the cube
@@ -199,7 +202,10 @@ int main() {
     shader.modifyUniform<glm::vec3>("lightColor", light.getColor());
     // point light
     shader.modifyUniform<glm::vec3>("light[0].position", light.getPosition());
-    shader.modifyUniform<glm::vec3>("light[0].color", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.modifyUniform<glm::vec3>("light[0].color", light.getColor());
+    shader.modifyUniform<glm::vec3>("light[0].ambient", light.getAmbient());
+    shader.modifyUniform<glm::vec3>("light[0].diffuse", light.getDiffuse());
+    shader.modifyUniform<glm::vec3>("light[0].specular", light.getSpecular());
     shader.modifyUniform<float>("light[0].constant", light.getAttenuationConstantFactor());
     shader.modifyUniform<float>("light[0].linear", light.getAttenuationLinearFactor());
     shader.modifyUniform<float>("light[0].quadratic", light.getAttenuationQuadraticFactor());
@@ -207,10 +213,10 @@ int main() {
     shader.modifyUniform<int>("numPointLights", 1);
     // spotlight
     // nie podawaæ tych wektorów z palca tylko poprzez light.color, light.attenuation itd. tak jak wy¿ej
-    shader.modifyUniform<glm::vec3>("spotlight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-    shader.modifyUniform<glm::vec3>("spotlight.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
-    shader.modifyUniform<glm::vec3>("spotlight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
-    shader.modifyUniform<glm::vec3>("spotlight.color", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.modifyUniform<glm::vec3>("spotlight.ambient", light.getAmbient());
+    shader.modifyUniform<glm::vec3>("spotlight.diffuse", light.getDiffuse());
+    shader.modifyUniform<glm::vec3>("spotlight.specular", light.getSpecular());
+    shader.modifyUniform<glm::vec3>("spotlight.color", light.getColor());
     shader.modifyUniform<float>("spotlight.constant", light.getAttenuationConstantFactor());
     shader.modifyUniform<float>("spotlight.linear", light.getAttenuationLinearFactor());
     shader.modifyUniform<float>("spotlight.quadratic", light.getAttenuationQuadraticFactor());

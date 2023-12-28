@@ -16,9 +16,9 @@ struct PointLight {
 
     vec3 position;  
   
-//    vec3 ambient;
-//    vec3 diffuse;
-//    vec3 specular;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
 	
     float constant;
     float linear;
@@ -120,9 +120,7 @@ vec3 calcSpotlight(Spotlight light, vec3 normal, vec3 viewDir) {
     vec3 diffuse = light.diffuse * diff * light.color;
     vec3 specular = light.specular * spec * light.color;
     
-    diffuse *= attenuation * intensity;
-    specular *= attenuation * intensity;
-    return (diffuse + specular);
+    return attenuation * intensity * (diffuse + specular);
 }
 
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir) {
@@ -132,24 +130,20 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir) {
     vec3 ambient = ambientStrength * light.color;
     // diffuse
     float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = diff * light.color;
+    vec3 diffuse = light.diffuse * diff * light.color;
 
      // specular
     float specularStrength = 3.0;
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
     float spec = pow(max(dot(normal, halfwayDir), 0.0), 128);
-    vec3 specular = specularStrength * spec * light.color;
+    vec3 specular = light.specular * spec * light.color;
 
     // attenuation
     float distance = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + (light.linear + light.quadratic * distance) * distance); 
 
-    ambient *= attenuation;
-    diffuse *= attenuation;
-    specular *= attenuation;
-
-    return (ambient + calculateShadow(light.shadowIndex) * (diffuse + specular));
+    return attenuation * (ambient + calculateShadow(light.shadowIndex) * (diffuse + specular));
 }
 
 void main() {

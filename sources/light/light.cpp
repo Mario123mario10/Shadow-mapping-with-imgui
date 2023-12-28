@@ -34,6 +34,30 @@ void Light::setAttenuation(float constantFactor, float linearFactor, float quadr
 	attenuation = { constantFactor, linearFactor, quadraticFactor };
 }
 
+void Light::setAmbient(const glm::vec3& amb) {
+	ambient = amb;
+}
+
+void Light::setAmbient(float x, float y, float z) {
+	ambient = { x, y, z };
+}
+
+void Light::setDiffuse(const glm::vec3& diff) {
+	diffuse = diff;
+}
+
+void Light::setDiffuse(float x, float y, float z) {
+	diffuse = { x, y, z };
+}
+
+void Light::setSpecular(const glm::vec3& spec) {
+	specular = spec;
+}
+
+void Light::setSpecular(float x, float y, float z) {
+	specular = { x, y, z };
+}
+
 const glm::vec3& Light::getPosition() const {
 	return position;
 }
@@ -44,6 +68,18 @@ const glm::vec3& Light::getColor() const {
 
 const glm::vec3& Light::getAttenuation() const {
 	return attenuation;
+}
+
+const glm::vec3& Light::getAmbient() const {
+	return ambient;
+}
+
+const glm::vec3& Light::getDiffuse() const {
+	return diffuse;
+}
+
+const glm::vec3& Light::getSpecular() const {
+	return specular;
 }
 
 float Light::getAttenuationConstantFactor() const {

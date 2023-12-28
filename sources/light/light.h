@@ -4,13 +4,18 @@
 // stl
 #include <unordered_map>
 #include <string>
+#include <array>
 
+#define NUM_FACES 6
 
 class Light {
 protected:
 	glm::vec3 position;
 	glm::vec3 color;
 	glm::vec3 attenuation;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
 public:
 	Light();
 	void setPosition(float x, float y, float z);
@@ -19,12 +24,27 @@ public:
 	void setColor(const glm::vec3& col);
 	void setAttenuation(float constantFactor, float linearFactor, float quadraticFactor);
 	void setAttenuation(const glm::vec3& col);
+	void setAmbient(const glm::vec3& ambient);
+	void setAmbient(float x, float y, float z);
+	void setDiffuse(const glm::vec3& diffuse);
+	void setDiffuse(float x, float y, float z);
+	void setSpecular(const glm::vec3& specular);
+	void setSpecular(float x, float y, float z);
 	const glm::vec3& getPosition() const;
 	const glm::vec3& getColor() const;
 	const glm::vec3& getAttenuation() const;
+	const glm::vec3& getAmbient() const;
+	const glm::vec3& getDiffuse() const;
+	const glm::vec3& getSpecular() const;
 	float getAttenuationConstantFactor() const;
 	float getAttenuationLinearFactor() const;
 	float getAttenuationQuadraticFactor() const;
+};
+
+class OmniDirectionalLight : public Light {
+	std::array<glm::mat4, NUM_FACES> projectionMatrices;
+public:
+	// TODO for future work
 };
 
 class PerspectiveLight : public Light {
