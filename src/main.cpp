@@ -212,17 +212,16 @@ int main() {
     shader.modifyUniform<int>("numPointLights", 1);
     shader.modifyUniform<glm::mat4>("LightProjViewMat[0]", lightPV);    // the same matrix as in here ***
     // point light
-    shader.modifyUniform<glm::vec3>("light[0].position", pointLight.getPosition());
-    shader.modifyUniform<glm::vec3>("light[0].color", pointLight.getColor());
-    shader.modifyUniform<glm::vec3>("light[0].ambient", pointLight.getAmbient());
-    shader.modifyUniform<glm::vec3>("light[0].diffuse", pointLight.getDiffuse());
-    shader.modifyUniform<glm::vec3>("light[0].specular", pointLight.getSpecular());
-    shader.modifyUniform<float>("light[0].constant", pointLight.getAttenuationConstantFactor());
-    shader.modifyUniform<float>("light[0].linear", pointLight.getAttenuationLinearFactor());
-    shader.modifyUniform<float>("light[0].quadratic", pointLight.getAttenuationQuadraticFactor());
-    shader.modifyUniform<int>("light[0].shadowIndex", 0);   // *** index of LightProjViewMat
+    shader.modifyUniform<glm::vec3>("pointLight[0].position", pointLight.getPosition());
+    shader.modifyUniform<glm::vec3>("pointLight[0].color", pointLight.getColor());
+    shader.modifyUniform<glm::vec3>("pointLight[0].ambient", pointLight.getAmbient());
+    shader.modifyUniform<glm::vec3>("pointLight[0].diffuse", pointLight.getDiffuse());
+    shader.modifyUniform<glm::vec3>("pointLight[0].specular", pointLight.getSpecular());
+    shader.modifyUniform<float>("pointLight[0].constant", pointLight.getAttenuationConstantFactor());
+    shader.modifyUniform<float>("pointLight[0].linear", pointLight.getAttenuationLinearFactor());
+    shader.modifyUniform<float>("pointLight[0].quadratic", pointLight.getAttenuationQuadraticFactor());
+    shader.modifyUniform<int>("pointLight[0].shadowIndex", 0);   // *** index of LightProjViewMat
     // spotlight
-    // nie podawaæ tych wektorów z palca tylko poprzez light.color, light.attenuation itd. tak jak wy¿ej
     shader.modifyUniform<glm::vec3>("spotlight.ambient", spotLight.getAmbient());
     shader.modifyUniform<glm::vec3>("spotlight.diffuse", spotLight.getDiffuse());
     shader.modifyUniform<glm::vec3>("spotlight.specular", spotLight.getSpecular());
@@ -245,6 +244,7 @@ int main() {
         processInput(window, camera, deltaTime);
 
         const glm::mat4 cameraPV = camera.getProjectionMatrix() * camera.getViewMatrix();
+        // Update flashlight position to follow camera.
         spotLight.setPosition(camera.getPosition());
         spotLight.setViewDirection(camera.getDirectionVector());
 
@@ -253,7 +253,6 @@ int main() {
         glViewport(0, 0, shadowMapWidth, shadowMapHeight);
         glClear(GL_DEPTH_BUFFER_BIT);
         shaderShadow.use();
-        //shaderShadow.modifyUniform<glm::mat4>("model", glm::mat4(1.0f));
         shaderShadow.modifyUniform<glm::mat4>("PV", lightPV);
         shaderShadow.modifyUniform<bool>("instanced", true);
         glEnable(GL_POLYGON_OFFSET_FILL);
@@ -261,28 +260,27 @@ int main() {
         cubes.renderGeometry();
         glDisable(GL_POLYGON_OFFSET_FILL);
 
-        //shaderShadow.modifyUniform<bool>("instanced", false);
-        //bulb.renderDepth();
-
-        hdrFramebuffer.use(); // from now on we render to our own framebuffer
+        // From now on we render to our own framebuffer.
+        hdrFramebuffer.use(); 
         glViewport(0, 0, screenWidth, screenHeight);
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        // draw instanced cubes
+        // Draw instanced cubes.
         shader.use();
         shader.modifyUniform<glm::mat4>("ProjViewMat", cameraPV);
         shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
         cubes.render();
 
-        // flashlight - follow camera
+        // flashlight
         shader.modifyUniform<glm::vec3>("spotlight.position", spotLight.getPosition());
         shader.modifyUniform<glm::vec3>("spotlight.direction", spotLight.getViewDirection());
 
-        // draw light cube
+        // Draw light cube.
         lightCubeShader.use();
         lightCubeShader.modifyUniform<glm::mat4>("PVM", cameraPV * lightModel);
         bulb.render();
 
+        // Render sky box at the end in terms of scene geometry.
         shaderCubeMap.use(); 
         shaderCubeMap.modifyUniform<glm::mat4>("view", glm::mat4(glm::mat3(camera.getViewMatrix())));
 
@@ -291,7 +289,7 @@ int main() {
         cubemap.render();
         glCullFace(GL_BACK);
 
-        // postprocessing
+        // Postprocessing.
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
         shaderMSAA.use();
         screen.render();

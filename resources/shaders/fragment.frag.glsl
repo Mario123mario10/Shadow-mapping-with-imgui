@@ -68,7 +68,7 @@ const ivec2 offsets[] = ivec2[](
 uniform vec3 viewPos;
 
 uniform int numPointLights;
-uniform PointLight light[maxNumDirPointLights];
+uniform PointLight pointLight[maxNumDirPointLights];
 
 uniform int numDirLights;
 uniform DirLight dirLight[maxNumDirPointLights];
@@ -155,12 +155,12 @@ void main() {
     vec3 viewDir = normalize(viewPos - fragPos);
 
     for(int i = 0; i < min(numDirLights, maxNumDirPointLights); i++) {
-        vec3 lightDir = normalize(light[i].position - fragPos);
+        vec3 lightDir = normalize(pointLight[i].position - fragPos);
         result += calcDirLight(dirLight[i], norm, viewDir);
     }
 
     for(int i = 0; i < min(numPointLights, maxNumDirPointLights); i++) {
-        result += calcPointLight(light[i], norm, viewDir);
+        result += calcPointLight(pointLight[i], norm, viewDir);
     }
 
     result += calcSpotlight(spotlight, norm, viewDir);
