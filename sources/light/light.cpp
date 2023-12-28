@@ -134,3 +134,36 @@ const glm::vec3& OrthographicLight::getPosition() const {
 void OrthographicLight::setViewDirection(float x, float y, float z) {
 	 viewDirection = { x, y, z };
 }
+
+SpotLight::SpotLight(float fovy, float aspectRatio, float zNear, float zFar)
+	: PerspectiveLight(fovy, aspectRatio, zNear, zFar) {
+
+}
+
+void SpotLight::setInnerCutOff(float cutoff) {
+	innerCutOff = cutoff;
+}
+
+void SpotLight::setOuterCutOff(float cutoff) {
+	outerCutOff = cutoff;
+}
+
+void SpotLight::setViewDirection(float x, float y, float z) {
+	viewDirection = { x, y, z };
+}
+
+void SpotLight::setViewDirection(const glm::vec3& viewDir) {
+	viewDirection = viewDir;
+}
+
+float SpotLight::getInnerCutOff() const {
+	return innerCutOff;
+}
+
+float SpotLight::getOuterCutOff() const {
+	return outerCutOff;
+}
+
+const glm::vec3& SpotLight::getViewDirection() const {
+	return viewDirection;
+}

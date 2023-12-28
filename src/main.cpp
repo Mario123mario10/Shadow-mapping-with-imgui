@@ -139,14 +139,25 @@ int main() {
     auto screenVbo = createVertexBuffer(screenMesh.vertices);
     auto screenIbo = createIndexBuffer(screenMesh.indices);
 
-    PerspectiveLight light(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
-    light.setPosition(0.0f, 0.0f, 0.0f);
-    light.setViewDirection(0.0f, 0.0f, -1.0f);
-    light.setColor(1.0f, 1.0f, 1.0f);
-    light.setAttenuation(1.0f, 0.09f, 0.032f);
-    light.setAmbient(0.0f, 0.0f, 0.0f);
-    light.setDiffuse(1.0f, 1.0f, 1.0f);
-    light.setSpecular(1.0f, 1.0f, 1.0f);
+    PerspectiveLight pointLight(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
+    pointLight.setPosition(0.0f, 0.0f, 0.0f);
+    pointLight.setViewDirection(0.0f, 0.0f, -1.0f);
+    pointLight.setColor(1.0f, 1.0f, 1.0f);
+    pointLight.setAttenuation(1.0f, 0.09f, 0.032f);
+    pointLight.setAmbient(0.0f, 0.0f, 0.0f);
+    pointLight.setDiffuse(1.0f, 1.0f, 1.0f);
+    pointLight.setSpecular(1.0f, 1.0f, 1.0f);
+
+    SpotLight spotLight(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
+    spotLight.setPosition(0.0f, 0.0f, 0.0f);
+    spotLight.setViewDirection(0.0f, 0.0f, -1.0f);
+    spotLight.setColor(1.0f, 1.0f, 1.0f);
+    spotLight.setAttenuation(1.0f, 0.09f, 0.032f);
+    spotLight.setAmbient(0.0f, 0.0f, 0.0f);
+    spotLight.setDiffuse(1.0f, 1.0f, 1.0f);
+    spotLight.setSpecular(1.0f, 1.0f, 1.0f);
+    spotLight.setInnerCutOff(glm::cos(glm::radians(12.5)));
+    spotLight.setOuterCutOff(glm::cos(glm::radians(17.5)));
 
     ObjectInstanced cubes(instances);
     cubes.addVertexBuffer(cubeVbo); // first vertex buffer which stores mesh of the cube
@@ -191,37 +202,36 @@ int main() {
 
     screen.addTexture(hdrTexture);
 
-    glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), light.getPosition()) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
-    const glm::mat4 lightPV = light.getProjectionMatrix() * light.getViewMatrix();
+    glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), pointLight.getPosition()) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+    const glm::mat4 lightPV = pointLight.getProjectionMatrix() * pointLight.getViewMatrix();
 
     camera.setMovementSpeed(7.0f);
     camera.setMouseSpeed(0.05f);
 
     shader.use();
-    shader.modifyUniform<glm::mat4>("LightProjViewMat[0]", lightPV);    // the same matrix as in here ***
-    shader.modifyUniform<glm::vec3>("lightColor", light.getColor());
-    // point light
-    shader.modifyUniform<glm::vec3>("light[0].position", light.getPosition());
-    shader.modifyUniform<glm::vec3>("light[0].color", light.getColor());
-    shader.modifyUniform<glm::vec3>("light[0].ambient", light.getAmbient());
-    shader.modifyUniform<glm::vec3>("light[0].diffuse", light.getDiffuse());
-    shader.modifyUniform<glm::vec3>("light[0].specular", light.getSpecular());
-    shader.modifyUniform<float>("light[0].constant", light.getAttenuationConstantFactor());
-    shader.modifyUniform<float>("light[0].linear", light.getAttenuationLinearFactor());
-    shader.modifyUniform<float>("light[0].quadratic", light.getAttenuationQuadraticFactor());
-    shader.modifyUniform<int>("light[0].shadowIndex", 0);   // *** index of LightProjViewMat
     shader.modifyUniform<int>("numPointLights", 1);
+    shader.modifyUniform<glm::mat4>("LightProjViewMat[0]", lightPV);    // the same matrix as in here ***
+    // point light
+    shader.modifyUniform<glm::vec3>("light[0].position", pointLight.getPosition());
+    shader.modifyUniform<glm::vec3>("light[0].color", pointLight.getColor());
+    shader.modifyUniform<glm::vec3>("light[0].ambient", pointLight.getAmbient());
+    shader.modifyUniform<glm::vec3>("light[0].diffuse", pointLight.getDiffuse());
+    shader.modifyUniform<glm::vec3>("light[0].specular", pointLight.getSpecular());
+    shader.modifyUniform<float>("light[0].constant", pointLight.getAttenuationConstantFactor());
+    shader.modifyUniform<float>("light[0].linear", pointLight.getAttenuationLinearFactor());
+    shader.modifyUniform<float>("light[0].quadratic", pointLight.getAttenuationQuadraticFactor());
+    shader.modifyUniform<int>("light[0].shadowIndex", 0);   // *** index of LightProjViewMat
     // spotlight
     // nie podawaæ tych wektorów z palca tylko poprzez light.color, light.attenuation itd. tak jak wy¿ej
-    shader.modifyUniform<glm::vec3>("spotlight.ambient", light.getAmbient());
-    shader.modifyUniform<glm::vec3>("spotlight.diffuse", light.getDiffuse());
-    shader.modifyUniform<glm::vec3>("spotlight.specular", light.getSpecular());
-    shader.modifyUniform<glm::vec3>("spotlight.color", light.getColor());
-    shader.modifyUniform<float>("spotlight.constant", light.getAttenuationConstantFactor());
-    shader.modifyUniform<float>("spotlight.linear", light.getAttenuationLinearFactor());
-    shader.modifyUniform<float>("spotlight.quadratic", light.getAttenuationQuadraticFactor());
-    shader.modifyUniform<float>("spotlight.cutOff", glm::cos(glm::radians(12.5)));
-    shader.modifyUniform<float>("spotlight.outerCutOff", glm::cos(glm::radians(17.5)));
+    shader.modifyUniform<glm::vec3>("spotlight.ambient", spotLight.getAmbient());
+    shader.modifyUniform<glm::vec3>("spotlight.diffuse", spotLight.getDiffuse());
+    shader.modifyUniform<glm::vec3>("spotlight.specular", spotLight.getSpecular());
+    shader.modifyUniform<glm::vec3>("spotlight.color", spotLight.getColor());
+    shader.modifyUniform<float>("spotlight.constant", spotLight.getAttenuationConstantFactor());
+    shader.modifyUniform<float>("spotlight.linear", spotLight.getAttenuationLinearFactor());
+    shader.modifyUniform<float>("spotlight.quadratic", spotLight.getAttenuationQuadraticFactor());
+    shader.modifyUniform<float>("spotlight.innerCutOff", spotLight.getInnerCutOff());
+    shader.modifyUniform<float>("spotlight.outerCutOff", spotLight.getOuterCutOff());
 
     shader.modifyUniform<int>("diffuseTexture", 0);
     shader.modifyUniform<int>("shadowMap", 1);
@@ -235,6 +245,9 @@ int main() {
         processInput(window, camera, deltaTime);
 
         const glm::mat4 cameraPV = camera.getProjectionMatrix() * camera.getViewMatrix();
+        spotLight.setPosition(camera.getPosition());
+        spotLight.setViewDirection(camera.getDirectionVector());
+
         // shadow depth map
         shadowFramebuffer.use();
         glViewport(0, 0, shadowMapWidth, shadowMapHeight);
@@ -262,8 +275,8 @@ int main() {
         cubes.render();
 
         // flashlight - follow camera
-        shader.modifyUniform<glm::vec3>("spotlight.position", camera.getPosition());
-        shader.modifyUniform<glm::vec3>("spotlight.direction", camera.getDirectionVector());
+        shader.modifyUniform<glm::vec3>("spotlight.position", spotLight.getPosition());
+        shader.modifyUniform<glm::vec3>("spotlight.direction", spotLight.getViewDirection());
 
         // draw light cube
         lightCubeShader.use();

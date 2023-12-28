@@ -44,7 +44,7 @@ struct Spotlight {
 
     vec3 position;
     vec3 direction;
-    float cutOff;
+    float innerCutOff;
     float outerCutOff;
 
     float constant;
@@ -115,7 +115,7 @@ vec3 calcSpotlight(Spotlight light, vec3 normal, vec3 viewDir) {
     float attenuation = 1.0 / (light.constant + light.linear * dist + light.quadratic * (dist * dist)); 
     // spotlight
     float theta = dot(lightDir, normalize(-light.direction));
-    float epsilon = light.cutOff - light.outerCutOff;
+    float epsilon = light.innerCutOff - light.outerCutOff;
     float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
     vec3 diffuse = light.diffuse * diff * light.color;
     vec3 specular = light.specular * spec * light.color;
