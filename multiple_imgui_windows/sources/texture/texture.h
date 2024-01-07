@@ -27,6 +27,7 @@ public:
 
 class Texture2D : public Texture {
 public:
+	Texture2D(int width, int height);
 	Texture2D(std::string_view filePath);
 };
 

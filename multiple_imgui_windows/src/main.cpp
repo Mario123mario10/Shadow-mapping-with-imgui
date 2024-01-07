@@ -41,7 +41,7 @@ GLuint RBO; // rendering buffer object
 
 // our window dimensions
 const GLuint WIDTH = 1000;
-const GLint HEIGHT = 1000;
+const GLint HEIGHT = 700;
 
 
 
@@ -152,7 +152,7 @@ int main() {
         model = glm::rotate(model, glm::radians(static_cast<float>(dis(gen))), glm::vec3(binDis(gen), binDis(gen), binDis(gen)));
     }
 
-    FPSCamera camera(0.1f, 150.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
+    FPSCamera camera(0.1f, 150.0f, static_cast<float>(WIDTH) / static_cast<float>(HEIGHT), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
     Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
     Shader lightCubeShader(SHADERS_PATH "lightcube.vert.glsl", SHADERS_PATH "lightcube.frag.glsl"); // light shader setup here because other shaders are here as well
     Shader shaderMSAA(SHADERS_PATH "multisample_to_texture_2d.vert.glsl", SHADERS_PATH "multisample_to_texture_2d.frag.glsl");
@@ -287,7 +287,7 @@ int main() {
         //bulb.renderDepth();
 
         hdrFramebuffer.use(); // from now on we render to our own framebuffer
-        glViewport(0, 0, screenWidth, screenHeight);
+        glViewport(0, 0, WIDTH, HEIGHT);
         glClear(GL_DEPTH_BUFFER_BIT);
 
         // draw instanced cubes
@@ -313,9 +313,11 @@ int main() {
         
         // postprocessing
         glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+       
         shaderMSAA.use();
         screen.render();
         glDepthFunc(GL_LESS);
+        
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
 
         // Renderowanie ImGui
@@ -323,9 +325,9 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::SetNextWindowSize(ImVec2(1000, 700));
+        ImGui::SetNextWindowSize(ImVec2(WIDTH, HEIGHT));
         ImGui::Begin("OpenGL Texture Window");
-        ImGui::Image((void*)(intptr_t)texture_id, ImVec2(screenWidth, screenHeight));
+        ImGui::Image((void*)(intptr_t)texture_id, ImVec2(WIDTH, HEIGHT));
         ImGui::End();
 
         ImGui::Render();

@@ -7,10 +7,10 @@
 Framebuffer::Framebuffer(std::vector<unsigned int>&& drawBuffers, unsigned int readBuffer)
 	: readBuffer(readBuffer), drawBuffers(drawBuffers) {
 	glGenFramebuffers(1, &id);
-	glBindFramebuffer(GL_FRAMEBUFFER, id);
-	glDrawBuffers(drawBuffers.size(), drawBuffers.data());
-	glReadBuffer(readBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//glBindFramebuffer(GL_FRAMEBUFFER, id);
+	//glDrawBuffers(drawBuffers.size(), drawBuffers.data());
+	//glReadBuffer(readBuffer);
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 Framebuffer::~Framebuffer() {

@@ -69,6 +69,13 @@ static void helperSetTextureFormat(unsigned int* format, unsigned int* internalF
     }
 }
 
+Texture2D::Texture2D(int width, int height) : Texture(GL_TEXTURE_2D) {
+    glBindTexture(GL_TEXTURE_2D, id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
 Texture2D::Texture2D(std::string_view filePath) : Texture(GL_TEXTURE_2D) {
     int nrChannels = {}, width = {}, height = {};
     unsigned int internalFormat = { GL_NONE }, format = { GL_NONE };
