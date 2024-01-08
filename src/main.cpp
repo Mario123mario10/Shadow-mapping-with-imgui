@@ -167,6 +167,9 @@ int main() {
     std::shared_ptr<Texture2DMultisample> hdrTexture = std::make_shared<Texture2DMultisample>(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);   // here we store colours of each fragment/pixel
     std::shared_ptr<TextureCubeMap> textureCubeMap(new TextureCubeMap(texture_filenames));
     std::shared_ptr<Texture2D> crateImage(new Texture2D(TEXTURES_PATH "crate.jpg"));
+    std::shared_ptr<Texture2D> drakanImage(new Texture2D(TEXTURES_PATH "drakan.jpg"));
+    std::shared_ptr<Texture2D> ceilingImage(new Texture2D(TEXTURES_PATH "ceiling.jpg"));
+    std::shared_ptr<Texture2D> warehouseWallImage(new Texture2D(TEXTURES_PATH "warehousewall.jpg"));
     const int shadowMapWidth = 2048, shadowMapHeight = 2048;
     std::shared_ptr<ShadowMap> shadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
     
