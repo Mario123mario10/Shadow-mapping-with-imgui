@@ -44,6 +44,40 @@ std::shared_ptr<IndexBuffer> createIndexBuffer(std::vector<T> data) {
     return ibo;
 }
 
+class BoxStack {
+	private:
+		double floorLevel;
+		double boxHeight;
+		double angle;
+    public:
+        BoxStack(double floorLevel, double boxHeight, double angle): 
+            floorLevel(floorLevel), boxHeight(boxHeight), angle(angle) {}
+        void modelBoxStack(std::vector<glm::mat4>& models, double xCoordinate, double yCoordinate, std::initializer_list<std::size_t> indices) {
+            int height = 0;
+            for (std::size_t index : indices) {
+                auto& model = models[index];
+				model = glm::translate(glm::mat4(1.0f), glm::vec3(xCoordinate, floorLevel + index*height, yCoordinate));
+				model = glm::rotate(model, glm::radians(static_cast<float>(angle)), glm::vec3(0, 1, 0));
+                height += 1;
+            }
+        }
+
+        void modelRandomlyRotatedBoxStack(std::vector<glm::mat4>& models, double xCoordinate, double yCoordinate, std::initializer_list<std::size_t> indices) {
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::uniform_real_distribution<> dis(-100.0f, 100.0f);
+			std::uniform_int_distribution<int> binDis(0, 1);
+            int height = 0;
+            for (std::size_t index : indices) {
+                auto& model = models[index];
+				model = glm::translate(glm::mat4(1.0f), glm::vec3(xCoordinate, floorLevel + boxHeight*height, yCoordinate));
+				model = glm::rotate(model, glm::radians(static_cast<float>(dis(gen))), glm::vec3(0, 1, 0));
+                height += 1;
+            }
+        }
+};
+
+
 int main() {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW." << std::endl;
@@ -103,13 +137,21 @@ int main() {
     std::uniform_real_distribution<> dis(-100.0f, 100.0f);
     std::uniform_int_distribution<int> binDis(0, 1);
 
-    const int instances = { 1 };
-    std::vector<glm::mat4> models(instances);
+    double x = 2;
+    double floorLevel = 0;
+    double boxLength = 2;
+    const int instances = { 10 };
 
-    for (auto& model : models) {
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(dis(gen), dis(gen), dis(gen)));
-        model = glm::rotate(model, glm::radians(static_cast<float>(dis(gen))), glm::vec3(binDis(gen), binDis(gen), binDis(gen)));
-    }
+    std::vector<glm::mat4> models(instances);
+    BoxStack boxStack(floorLevel, boxLength, 0);
+    // Two box stack
+    boxStack.modelRandomlyRotatedBoxStack(models, 10, 5, { 0, 1 });
+    boxStack.modelRandomlyRotatedBoxStack(models, -7, -8, { 2, 3, 4 });
+    boxStack.modelRandomlyRotatedBoxStack(models, -2, 4, { 5 });
+    boxStack.modelRandomlyRotatedBoxStack(models, 9, 9, { 6 });
+	boxStack.modelRandomlyRotatedBoxStack(models, 3, -9, { 7, 8, 9 });
+
+
 
     FPSCamera camera(0.1f, 150.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
     Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
@@ -124,9 +166,11 @@ int main() {
     RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);     // here we store depths of each fragment/pixel
     std::shared_ptr<Texture2DMultisample> hdrTexture = std::make_shared<Texture2DMultisample>(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);   // here we store colours of each fragment/pixel
     std::shared_ptr<TextureCubeMap> textureCubeMap(new TextureCubeMap(texture_filenames));
-    std::shared_ptr<Texture2D> textureImage(new Texture2D(TEXTURES_PATH "crate.jpg"));
+    std::shared_ptr<Texture2D> crateImage(new Texture2D(TEXTURES_PATH "crate.jpg"));
     const int shadowMapWidth = 2048, shadowMapHeight = 2048;
     std::shared_ptr<ShadowMap> shadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
+    
+    //std::shared_ptr<Texture2D> textureImage(new Texture2D(TEXTURES_PATH "crate.jpg"));
 
     const Mesh<Vertex2D, uint8_t>& screenMesh = { screenVertices, screenIndices };  // also we can create mesh from our own vectors
 
@@ -147,7 +191,7 @@ int main() {
     pointLight.setAmbient(0.0f, 0.0f, 0.0f);
     pointLight.setDiffuse(1.0f, 1.0f, 1.0f);
     pointLight.setSpecular(1.0f, 1.0f, 1.0f);
-
+    
     SpotLight spotLight(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
     spotLight.setPosition(0.0f, 0.0f, 0.0f);
     spotLight.setViewDirection(0.0f, 0.0f, -1.0f);
@@ -163,9 +207,16 @@ int main() {
     cubes.addVertexBuffer(cubeVbo); // first vertex buffer which stores mesh of the cube
     cubes.attachIndexBuffer(cubeIbo);
     cubes.addVertexBuffer(createVertexBuffer(models, true));    // second vertex buffer which stores model matrices of our cubes held in "cubes" variable
-    cubes.addTexture(textureImage); // index 0
+    cubes.addTexture(crateImage); // index 0
     cubes.addTexture(shadowMap);    // index 1
-
+    
+//    ObjectInstanced floor(1);
+//    cubes.addVertexBuffer(cubeVbo); 
+//    cubes.attachIndexBuffer(cubeIbo);
+//    cubes.addVertexBuffer(createVertexBuffer(models, true));
+//    cubes.addTexture(crateImage); // index 0
+//    cubes.addTexture(shadowMap);    // index 1
+//
     Object bulb;    // regular cube object
     bulb.addVertexBuffer(bulbVbo);
     bulb.attachIndexBuffer(bulbIbo);
@@ -193,7 +244,7 @@ int main() {
     shaderMSAA.use();
     shaderMSAA.modifyUniform<int>("planeTexture", 0);
     shaderMSAA.modifyUniform<int>("numSamples", samples);
-    shaderMSAA.modifyUniform<float>("gamma", 2.2f);     // gamma correction - originally 2.2 but adjust this value so that it looks good
+    shaderMSAA.modifyUniform<float>("gamma", 1.6f);     // gamma correction - originally 2.2 but adjust this value so that it looks good
     shaderMSAA.modifyUniform<float>("exposure", 0.6f);     // High Dynamic Range - adjust this value so that it looks good
 
     shaderCubeMap.use();
