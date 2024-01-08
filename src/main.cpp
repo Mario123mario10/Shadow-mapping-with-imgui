@@ -168,9 +168,15 @@ int main() {
 
     const int numberOfSticks = { 1 };
     const float stickLevel = { 0 };
+    const float stickBulb = { 11 };
     std::vector<glm::mat4> stickModels(numberOfSticks);
-    stickModels[0] = glm::translate(glm::mat4(1.0f), glm::vec3(16, stickLevel, 0));
+    stickModels[0] = glm::translate(glm::mat4(1.0f), glm::vec3(stickBulb, stickLevel, 0));
     stickModels[0] = glm::scale(stickModels[0], glm::vec3(2, 2, 2));
+
+    const int numberOfGizmos = { 1 };
+    std::vector<glm::mat4> gizmoModels(numberOfGizmos);
+    gizmoModels[0] = glm::translate(glm::mat4(1.0f), glm::vec3(5, floorLevel+0.95 , -1));
+    gizmoModels[0] = glm::scale(gizmoModels[0], glm::vec3(2, 2, 2));
 
     const int numberOfWalls = { 3 };
     const int wallLevelCorrection = { 4 };
@@ -199,6 +205,7 @@ int main() {
     ObjectLoader<uint16_t> ceilingObj(MODELS_PATH "wall.obj");
     ObjectLoader<uint16_t> wallObj(MODELS_PATH "newall.obj");
     ObjectLoader<uint16_t> stickObj(MODELS_PATH "badyl.obj");
+    ObjectLoader<uint16_t> gizmoObj(MODELS_PATH "gizmo.obj");
 
     const int samples = { 4 };
     RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);     // here we store depths of each fragment/pixel
@@ -211,6 +218,7 @@ int main() {
     std::shared_ptr<Texture2D> floorImage(new Texture2D(TEXTURES_PATH "floor.jpg"));
     std::shared_ptr<Texture2D> warehouseWallImage(new Texture2D(TEXTURES_PATH "warehousewall2.jpg"));
     std::shared_ptr<Texture2D> stickImage(new Texture2D(TEXTURES_PATH "wood.jpg"));
+    std::shared_ptr<Texture2D> gizmoImage(new Texture2D(TEXTURES_PATH "marble.jpg"));
 
     const int shadowMapWidth = 2048, shadowMapHeight = 2048;
     std::shared_ptr<ShadowMap> ceilingShadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
@@ -241,20 +249,23 @@ int main() {
     auto stickVbo = createVertexBuffer(stickObj.getMesh().vertices);
     auto stickIbo = createIndexBuffer(stickObj.getMesh().indices);
 
+    auto gizmoVbo = createVertexBuffer(gizmoObj.getMesh().vertices);
+    auto gizmoIbo = createIndexBuffer(gizmoObj.getMesh().indices);
+
     PerspectiveLight pointLight(glm::radians(120.0f), 1.0f, 0.1f, 15.0f);
     pointLight.setPosition(0.0f, 9.6f, 0.0f);
     pointLight.setViewDirection(0.0f, -5.0f, -0.5f);
-    pointLight.setColor(1.0f, 1.0f, 1.0f);
-    pointLight.setAttenuation(1.0f, 0.18f, 0.064f);
+    pointLight.setColor(1.f, 0.35f, 0.35f);
+    pointLight.setAttenuation(0.5f, 0.09f, 0.04f);
     pointLight.setAmbient(0.0f, 0.0f, 0.0f);
     pointLight.setDiffuse(0.5f, 0.5f, 0.5f);
     pointLight.setSpecular(1.0f, 1.0f, 1.0f);
     
     PerspectiveLight standingLight(glm::radians(120.0f), 1.0f, 0.1f, 30.0f);
-    standingLight.setPosition(16.0f, 6.4f, 0.0f);
+    standingLight.setPosition(stickBulb, 6.4f, 0.0f);
     standingLight.setViewDirection(-3.0f, 0.0f, -0.5f);
-    standingLight.setColor(1.0f, 1.0f, 1.0f);
-    standingLight.setAttenuation(1.0f, 0.045f, 0.016f);
+    standingLight.setColor(0.35f, 0.35f, 0.35f);
+    standingLight.setAttenuation(1.0f, 0.045f, 0.05f);
     standingLight.setAmbient(0.0f, 0.0f, 0.0f);
     standingLight.setDiffuse(1.0f, 1.0f, 1.0f);
     standingLight.setSpecular(1.0f, 1.0f, 1.0f);
@@ -262,8 +273,8 @@ int main() {
     SpotLight spotLight(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
     spotLight.setPosition(0.0f, 0.0f, 0.0f);
     spotLight.setViewDirection(0.0f, 0.0f, -1.0f);
-    spotLight.setColor(1.0f, 1.0f, 1.0f);
-    spotLight.setAttenuation(1.0f, 0.09f, 0.032f);
+    spotLight.setColor(1.f, 1.f, 1.f);
+    spotLight.setAttenuation(0.5f, 0.045f, 0.01f);
     spotLight.setAmbient(0.0f, 0.0f, 0.0f);
     spotLight.setDiffuse(1.0f, 1.0f, 1.0f);
     spotLight.setSpecular(1.0f, 1.0f, 1.0f);
@@ -310,6 +321,13 @@ int main() {
     sticks.addTexture(ceilingShadowMap);  // index 1
     sticks.addTexture(standingShadowMap);  // index 2
 
+    ObjectInstanced gizmos(numberOfGizmos);
+    gizmos.addVertexBuffer(gizmoVbo); 
+    gizmos.attachIndexBuffer(gizmoIbo);
+    gizmos.addVertexBuffer(createVertexBuffer(gizmoModels, true));
+    gizmos.addTexture(gizmoImage); // index 0
+    gizmos.addTexture(ceilingShadowMap);  // index 1
+    gizmos.addTexture(standingShadowMap);  // index 2
 
     Object bulb;    // regular cube object
     bulb.addVertexBuffer(bulbVbo);
@@ -432,6 +450,7 @@ int main() {
         walls.renderGeometry();
         ceilings.renderGeometry();
         sticks.renderGeometry();
+        gizmos.renderGeometry();
 
         // 2. standing lamp.
         standingShadowFramebuffer.use();
@@ -442,6 +461,7 @@ int main() {
         walls.renderGeometry();
         ceilings.renderGeometry();
         sticks.renderGeometry();
+        gizmos.renderGeometry();
 
         glDisable(GL_POLYGON_OFFSET_FILL);
         
@@ -459,15 +479,18 @@ int main() {
         floors.render();
         ceilings.render();
         sticks.render();
+        gizmos.render();
 
         // flashlight
         shader.modifyUniform<glm::vec3>("spotlight.position", spotLight.getPosition());
         shader.modifyUniform<glm::vec3>("spotlight.direction", spotLight.getViewDirection());
-
         // Draw light cube.
         lightCubeShader.use();
+        float multiplier = 16;
+        lightCubeShader.modifyUniform<glm::vec3>("color", multiplier * pointLight.getColor() );
         lightCubeShader.modifyUniform<glm::mat4>("PVM", cameraPV * lightModel);
         bulb.render();
+        lightCubeShader.modifyUniform<glm::vec3>("color", multiplier * standingLight.getColor());
         lightCubeShader.modifyUniform<glm::mat4>("PVM", cameraPV * standingLampModel);
         bulb.render();
 
