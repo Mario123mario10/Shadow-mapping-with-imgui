@@ -23,6 +23,7 @@
 #include <random>
 #include <iostream>
 #include <chrono>
+#include <numbers>
 
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
 
@@ -124,12 +125,12 @@ int main() {
     };
 
     std::vector<std::string_view> texture_filenames = {
-        CUBEMAP_PATH "right.jpg",
-        CUBEMAP_PATH "left.jpg",
-        CUBEMAP_PATH "top.jpg",
-        CUBEMAP_PATH "bottom.jpg",
-        CUBEMAP_PATH "front.jpg",
-        CUBEMAP_PATH "back.jpg"
+        TEXTURES_PATH "nightright.jpg",
+        TEXTURES_PATH "nightleft.jpg",
+        TEXTURES_PATH "nighttop.jpg",
+        TEXTURES_PATH "drakan.jpg",
+        TEXTURES_PATH "nightfront.jpg",
+        TEXTURES_PATH "nightback.jpg"
     };
 
     std::random_device rd;
@@ -137,21 +138,46 @@ int main() {
     std::uniform_real_distribution<> dis(-100.0f, 100.0f);
     std::uniform_int_distribution<int> binDis(0, 1);
 
-    double x = 2;
-    double floorLevel = 0;
-    double boxLength = 2;
-    const int instances = { 10 };
+    const double floorLevel = 0;
+    const double boxLength = 2;
+    const int numberOfCubes = { 10 };
 
-    std::vector<glm::mat4> models(instances);
+    std::vector<glm::mat4> cubeModels(numberOfCubes);
     BoxStack boxStack(floorLevel, boxLength, 0);
     // Two box stack
-    boxStack.modelRandomlyRotatedBoxStack(models, 10, 5, { 0, 1 });
-    boxStack.modelRandomlyRotatedBoxStack(models, -7, -8, { 2, 3, 4 });
-    boxStack.modelRandomlyRotatedBoxStack(models, -2, 4, { 5 });
-    boxStack.modelRandomlyRotatedBoxStack(models, 9, 9, { 6 });
-	boxStack.modelRandomlyRotatedBoxStack(models, 3, -9, { 7, 8, 9 });
+    boxStack.modelRandomlyRotatedBoxStack(cubeModels, 10, 5, { 0, 1 });
+    boxStack.modelRandomlyRotatedBoxStack(cubeModels, -7, -8, { 2, 3, 4 });
+    boxStack.modelRandomlyRotatedBoxStack(cubeModels, -2, 4, { 5 });
+    boxStack.modelRandomlyRotatedBoxStack(cubeModels, 6, 7, { 6 });
+	boxStack.modelRandomlyRotatedBoxStack(cubeModels, 3, -8, { 7, 8, 9 });
 
 
+    const int numberOfFloors = { 1 };
+    const int floorLevelCorrection = { - 1 };
+    std::vector<glm::mat4> floorModels(numberOfFloors);
+    floorModels[0] = glm::translate(glm::mat4(1.0f), glm::vec3(0, floorLevel+floorLevelCorrection, 0));
+    floorModels[0] = glm::scale(floorModels[0], glm::vec3(10, 10, 10));
+
+
+    const int numberOfCeilings = { 1 };
+    const int ceilingLevel = { 10 };
+    std::vector<glm::mat4> ceilingModels(numberOfCeilings);
+    ceilingModels[0] = glm::translate(glm::mat4(1.0f), glm::vec3(0, ceilingLevel, 0));
+    ceilingModels[0] = glm::scale(ceilingModels[0], glm::vec3(1, 1, 1));
+
+    const int numberOfWalls = { 3 };
+    const int wallLevelCorrection = { 4 };
+    std::vector<glm::mat4> wallModels(numberOfWalls);
+    wallModels[0] = glm::translate(glm::mat4(1.0f), glm::vec3(-10, floorLevel + wallLevelCorrection, 0));
+    wallModels[0] = glm::rotate(wallModels[0], glm::radians(static_cast<float>(90)), glm::vec3(1, 0, 0));
+    wallModels[0] = glm::rotate(wallModels[0], glm::radians(static_cast<float>(90)), glm::vec3(0, 0, 1));
+    wallModels[0] = glm::scale(wallModels[0], glm::vec3(0.7, 0.7, 0.5));
+    wallModels[1] = glm::translate(glm::mat4(1.0f), glm::vec3(0, floorLevel + wallLevelCorrection, -10));
+    wallModels[1] = glm::rotate(wallModels[1], glm::radians(static_cast<float>(90)), glm::vec3(1, 0, 0));
+    wallModels[1] = glm::scale(wallModels[1], glm::vec3(0.7, 0.7, 0.5));
+    wallModels[2] = glm::translate(glm::mat4(1.0f), glm::vec3(0, floorLevel + wallLevelCorrection, 10));
+    wallModels[2] = glm::rotate(wallModels[2], glm::radians(static_cast<float>(90)), glm::vec3(1, 0, 0));
+    wallModels[2] = glm::scale(wallModels[2], glm::vec3(0.7, 0.7, 0.5));
 
     FPSCamera camera(0.1f, 150.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
     Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
@@ -161,15 +187,20 @@ int main() {
     Shader shaderShadow(SHADERS_PATH "shadowmap.vert.glsl", SHADERS_PATH "shadowmap.frag.glsl");
     ObjectLoader<uint8_t> cubeObj(MODELS_PATH "cube.obj");  // only loads mesh from .obj file
     ObjectLoader<uint16_t> bulbObj(MODELS_PATH "bulb.obj");
+    ObjectLoader<uint16_t> floorObj(MODELS_PATH "floor.obj");
+    ObjectLoader<uint16_t> ceilingObj(MODELS_PATH "floor.obj");
+    ObjectLoader<uint16_t> wallObj(MODELS_PATH "wall.obj");
 
     const int samples = { 4 };
     RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);     // here we store depths of each fragment/pixel
     std::shared_ptr<Texture2DMultisample> hdrTexture = std::make_shared<Texture2DMultisample>(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);   // here we store colours of each fragment/pixel
     std::shared_ptr<TextureCubeMap> textureCubeMap(new TextureCubeMap(texture_filenames));
     std::shared_ptr<Texture2D> crateImage(new Texture2D(TEXTURES_PATH "crate.jpg"));
+
     std::shared_ptr<Texture2D> drakanImage(new Texture2D(TEXTURES_PATH "drakan.jpg"));
     std::shared_ptr<Texture2D> ceilingImage(new Texture2D(TEXTURES_PATH "ceiling.jpg"));
     std::shared_ptr<Texture2D> warehouseWallImage(new Texture2D(TEXTURES_PATH "warehousewall.jpg"));
+
     const int shadowMapWidth = 2048, shadowMapHeight = 2048;
     std::shared_ptr<ShadowMap> shadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
     
@@ -185,6 +216,17 @@ int main() {
 
     auto screenVbo = createVertexBuffer(screenMesh.vertices);
     auto screenIbo = createIndexBuffer(screenMesh.indices);
+
+    auto floorVbo = createVertexBuffer(floorObj.getMesh().vertices);
+    auto floorIbo = createIndexBuffer(floorObj.getMesh().indices);
+    
+    auto ceilingVbo = createVertexBuffer(ceilingObj.getMesh().vertices);
+    auto ceilingIbo = createIndexBuffer(ceilingObj.getMesh().indices);
+
+    auto wallVbo = createVertexBuffer(wallObj.getMesh().vertices);
+    auto wallIbo = createIndexBuffer(wallObj.getMesh().indices);
+
+
 
     PerspectiveLight pointLight(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
     pointLight.setPosition(0.0f, 0.0f, 0.0f);
@@ -206,20 +248,35 @@ int main() {
     spotLight.setInnerCutOff(glm::cos(glm::radians(12.5)));
     spotLight.setOuterCutOff(glm::cos(glm::radians(17.5)));
 
-    ObjectInstanced cubes(instances);
+    ObjectInstanced cubes(numberOfCubes);
     cubes.addVertexBuffer(cubeVbo); // first vertex buffer which stores mesh of the cube
     cubes.attachIndexBuffer(cubeIbo);
-    cubes.addVertexBuffer(createVertexBuffer(models, true));    // second vertex buffer which stores model matrices of our cubes held in "cubes" variable
+    cubes.addVertexBuffer(createVertexBuffer(cubeModels, true));    // second vertex buffer which stores model matrices of our cubes held in "cubes" variable
     cubes.addTexture(crateImage); // index 0
     cubes.addTexture(shadowMap);    // index 1
     
-//    ObjectInstanced floor(1);
-//    cubes.addVertexBuffer(cubeVbo); 
-//    cubes.attachIndexBuffer(cubeIbo);
-//    cubes.addVertexBuffer(createVertexBuffer(models, true));
-//    cubes.addTexture(crateImage); // index 0
-//    cubes.addTexture(shadowMap);    // index 1
-//
+    ObjectInstanced floors(numberOfFloors);
+    floors.addVertexBuffer(floorVbo); 
+    floors.attachIndexBuffer(floorIbo);
+    floors.addVertexBuffer(createVertexBuffer(floorModels, true));
+    //floors.addTexture(floorImage); // index 0
+    //floors.addTexture(shadowMap);  // index 1
+
+    ObjectInstanced ceilings(numberOfCeilings);
+    floors.addVertexBuffer(ceilingVbo); 
+    floors.attachIndexBuffer(ceilingIbo);
+    floors.addVertexBuffer(createVertexBuffer(ceilingModels, true));
+    //floors.addTexture(floorImage); // index 0
+    //floors.addTexture(shadowMap);  // index 1
+
+    ObjectInstanced walls(numberOfWalls);
+    walls.addVertexBuffer(wallVbo); 
+    walls.attachIndexBuffer(wallIbo);
+    walls.addVertexBuffer(createVertexBuffer(wallModels, true));
+    walls.addTexture(warehouseWallImage); // index 0
+    walls.addTexture(shadowMap);  // index 1
+
+
     Object bulb;    // regular cube object
     bulb.addVertexBuffer(bulbVbo);
     bulb.attachIndexBuffer(bulbIbo);
@@ -232,7 +289,7 @@ int main() {
     cubemap.addVertexBuffer(cubeVbo);
     cubemap.attachIndexBuffer(cubeIbo);
     cubemap.addTexture(textureCubeMap);
-
+    
     Framebuffer hdrFramebuffer({ GL_COLOR_ATTACHMENT0 }, GL_NONE); // framebuffer requires buffers to store colour and depth...
     hdrFramebuffer.use();
     hdrFramebuffer.attach(*hdrTexture, GL_COLOR_ATTACHMENT0);   // we pass colour storage
@@ -312,8 +369,12 @@ int main() {
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.7f, 3.0f);
         cubes.renderGeometry();
+        floors.renderGeometry();
+        walls.renderGeometry();
+        //ceilings.renderGeometry();
         glDisable(GL_POLYGON_OFFSET_FILL);
-
+        
+        
         // From now on we render to our own framebuffer.
         hdrFramebuffer.use(); 
         glViewport(0, 0, screenWidth, screenHeight);
@@ -324,6 +385,9 @@ int main() {
         shader.modifyUniform<glm::mat4>("ProjViewMat", cameraPV);
         shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
         cubes.render();
+        walls.render();
+        floors.render();
+        //ceilings.render();
 
         // flashlight
         shader.modifyUniform<glm::vec3>("spotlight.position", spotLight.getPosition());
