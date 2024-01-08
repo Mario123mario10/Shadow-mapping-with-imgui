@@ -29,6 +29,7 @@
 #include "imgui_impl_opengl3.h"
 
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 template<typename T>
 std::shared_ptr<VertexBuffer> createVertexBuffer(std::vector<T> data, bool instanced = false) {
@@ -48,7 +49,13 @@ std::shared_ptr<IndexBuffer> createIndexBuffer(std::vector<T> data) {
     return ibo;
 }
 
+bool mouseLocked = false;
+static ImVec4 color = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+static double xpos = -1.0, ypos = -1.0;
+
+
 int main() {
+
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW." << std::endl;
         return -1;
@@ -69,7 +76,8 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSwapInterval(0);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -149,7 +157,7 @@ int main() {
     PerspectiveLight pointLight(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
     pointLight.setPosition(0.0f, 0.0f, 0.0f);
     pointLight.setViewDirection(0.0f, 0.0f, -1.0f);
-    pointLight.setColor(1.0f, 1.0f, 1.0f);
+    pointLight.setColor(0.0f, 0.0f, 1.0f);
     pointLight.setAttenuation(1.0f, 0.09f, 0.032f);
     pointLight.setAmbient(0.0f, 0.0f, 0.0f);
     pointLight.setDiffuse(1.0f, 1.0f, 1.0f);
@@ -158,7 +166,7 @@ int main() {
     SpotLight spotLight(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
     spotLight.setPosition(0.0f, 0.0f, 0.0f);
     spotLight.setViewDirection(0.0f, 0.0f, -1.0f);
-    spotLight.setColor(1.0f, 1.0f, 1.0f);
+    spotLight.setColor(0.0f, 0.0f, 10.0f);
     spotLight.setAttenuation(1.0f, 0.09f, 0.032f);
     spotLight.setAmbient(0.0f, 0.0f, 0.0f);
     spotLight.setDiffuse(1.0f, 1.0f, 1.0f);
@@ -258,6 +266,7 @@ int main() {
         {
             ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
         });
+    glfwSetKeyCallback(window, keyCallback);
 
     float last = 0.0f;
     while (!glfwWindowShouldClose(window)) {
@@ -291,6 +300,9 @@ int main() {
 
         // Draw instanced cubes.
         shader.use();
+        pointLight.setColor(color.x, color.y, color.z);
+        shader.modifyUniform<glm::vec3>("pointLight[0].color", pointLight.getColor());
+        shader.modifyUniform<glm::vec3>("pointLight[0].ambient", pointLight.getAmbient());
         shader.modifyUniform<glm::mat4>("ProjViewMat", cameraPV);
         shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
         cubes.render();
@@ -301,6 +313,7 @@ int main() {
 
         // Draw light cube.
         lightCubeShader.use();
+        lightCubeShader.modifyUniform<glm::vec3>("color", pointLight.getColor());
         lightCubeShader.modifyUniform<glm::mat4>("PVM", cameraPV * lightModel);
         bulb.render();
 
@@ -317,6 +330,7 @@ int main() {
         glBindFramebuffer(GL_FRAMEBUFFER, windowFramebuffer.getId());
         shaderMSAA.use();
         screen.render();
+        //glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
         glDepthFunc(GL_LESS);
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
         
@@ -326,11 +340,29 @@ int main() {
         ImGui::NewFrame();
 
         ImGui::SetNextWindowSize(ImVec2(windowWidth, windowHeight));
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::Begin("OpenGL Texture Window");
-        ImGui::Image((void*)(intptr_t)windowTexture->getId(), ImVec2(windowWidth, windowHeight));
+
+        ImGui::Image((void*)(intptr_t)windowTexture->getId(), ImVec2(windowWidth, windowHeight), ImVec2(0,1), ImVec2(1,0));
+        ImGui::End();
+
+        ImGui::SetNextWindowSize(ImVec2(500, 500));
+        ImGui::SetNextWindowPos(ImVec2(windowWidth, 0));
+        ImGui::Begin("OpenGL Settings");
+
+       
+        static bool alpha_preview = true;
+        static bool alpha_half_preview = false;
+        static bool drag_and_drop = true;
+        static bool options_menu = true;
+        static bool hdr = true;
+        ImGuiColorEditFlags misc_flags = (hdr ? ImGuiColorEditFlags_HDR : 0) | (drag_and_drop ? 0 : ImGuiColorEditFlags_NoDragDrop) | (alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0)) | (options_menu ? 0 : ImGuiColorEditFlags_NoOptions);
+        ImGui::ColorPicker4("##picker", (float*)&color, misc_flags | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+
         ImGui::End();
 
         ImGui::Render();
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Swap the front and back buffers
@@ -344,9 +376,10 @@ int main() {
 
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime)
 {
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
-    camera.updateEuler(xpos, -ypos);
+    
+    if (mouseLocked || (xpos < 0 && ypos < 0)) 
+        glfwGetCursorPos(window, &xpos, &ypos);
+    camera.updateEuler(xpos, ypos);
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -361,4 +394,21 @@ void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime)
         camera.processKeyboard(Bindings::UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera.processKeyboard(Bindings::DOWN, deltaTime);
+    
+        
+
+        
+}
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS) {
+        mouseLocked = !mouseLocked;
+        if (mouseLocked) {
+            glfwSetCursorPos(window, xpos, ypos);
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+
+        else
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
 }
