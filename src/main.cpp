@@ -24,6 +24,10 @@
 #include <iostream>
 #include <chrono>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
 
 template<typename T>
@@ -55,6 +59,8 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     int screenWidth = 1920, screenHeight = 1080;
+    const GLuint windowWidth = 1000; const GLint windowHeight = 700;
+
     GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Interpolated Triangle with Shaders", NULL, NULL);
     if (!window) {
         std::cerr << "Failed to create GLFW window." << std::endl;
@@ -123,6 +129,7 @@ int main() {
     const int samples = { 4 };
     RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);     // here we store depths of each fragment/pixel
     std::shared_ptr<Texture2DMultisample> hdrTexture = std::make_shared<Texture2DMultisample>(screenWidth, screenHeight, GL_R11F_G11F_B10F, samples);   // here we store colours of each fragment/pixel
+    std::shared_ptr<Texture2D> windowTexture(new Texture2D(windowWidth, windowHeight));
     std::shared_ptr<TextureCubeMap> textureCubeMap(new TextureCubeMap(texture_filenames));
     std::shared_ptr<Texture2D> textureImage(new Texture2D(TEXTURES_PATH "drakan.jpg"));
     const int shadowMapWidth = 2048, shadowMapHeight = 2048;
@@ -190,6 +197,11 @@ int main() {
     shadowFramebuffer.attach(*shadowMap, GL_DEPTH_ATTACHMENT);
     shadowFramebuffer.isComplete();
 
+    Framebuffer windowFramebuffer({ GL_COLOR_ATTACHMENT0 }, GL_NONE);
+    windowFramebuffer.use();
+    windowFramebuffer.attach(*windowTexture, GL_COLOR_ATTACHMENT0);   // we pass colour storage
+
+
     shaderMSAA.use();
     shaderMSAA.modifyUniform<int>("planeTexture", 0);
     shaderMSAA.modifyUniform<int>("numSamples", samples);
@@ -235,6 +247,18 @@ int main() {
     shader.modifyUniform<int>("diffuseTexture", 0);
     shader.modifyUniform<int>("shadowMap", 1);
 
+    // ImGui
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
+    glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods)
+        {
+            ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+        });
+
     float last = 0.0f;
     while (!glfwWindowShouldClose(window)) {
         float deltaTime = glfwGetTime() - last;
@@ -262,7 +286,7 @@ int main() {
 
         // From now on we render to our own framebuffer.
         hdrFramebuffer.use(); 
-        glViewport(0, 0, screenWidth, screenHeight);
+        glViewport(0, 0, windowWidth, windowHeight);
         glClear(GL_DEPTH_BUFFER_BIT);
 
         // Draw instanced cubes.
@@ -290,10 +314,24 @@ int main() {
         glCullFace(GL_BACK);
 
         // Postprocessing.
-        glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, windowFramebuffer.getId());
         shaderMSAA.use();
         screen.render();
         glDepthFunc(GL_LESS);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
+        
+        // Rendering ImGui
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::SetNextWindowSize(ImVec2(windowWidth, windowHeight));
+        ImGui::Begin("OpenGL Texture Window");
+        ImGui::Image((void*)(intptr_t)windowTexture->getId(), ImVec2(windowWidth, windowHeight));
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Swap the front and back buffers
         glfwSwapBuffers(window);
@@ -308,7 +346,7 @@ void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime)
 {
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
-    camera.updateEuler(xpos, ypos);
+    camera.updateEuler(xpos, -ypos);
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
