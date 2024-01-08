@@ -146,9 +146,9 @@ int main() {
     BoxStack boxStack(floorLevel, boxLength, 0);
     // Two box stack
     boxStack.modelRandomlyRotatedBoxStack(cubeModels, 10, 5, { 0, 1 });
-    boxStack.modelRandomlyRotatedBoxStack(cubeModels, -7, -8, { 2, 3, 4 });
+    boxStack.modelRandomlyRotatedBoxStack(cubeModels, -6, -5, { 2, 3, 4 });
     boxStack.modelRandomlyRotatedBoxStack(cubeModels, -2, 4, { 5 });
-    boxStack.modelRandomlyRotatedBoxStack(cubeModels, 6, 7, { 6 });
+    boxStack.modelRandomlyRotatedBoxStack(cubeModels, 6, 4, { 6 });
 	boxStack.modelRandomlyRotatedBoxStack(cubeModels, 3, -8, { 7, 8, 9 });
 
 
@@ -167,17 +167,18 @@ int main() {
 
     const int numberOfWalls = { 3 };
     const int wallLevelCorrection = { 4 };
+    const float wallscaling = 2;
     std::vector<glm::mat4> wallModels(numberOfWalls);
-    wallModels[0] = glm::translate(glm::mat4(1.0f), glm::vec3(-10, floorLevel + wallLevelCorrection, 0));
+    wallModels[0] = glm::translate(glm::mat4(1.0f), glm::vec3(-10.7, floorLevel + wallLevelCorrection, -2.8));
     wallModels[0] = glm::rotate(wallModels[0], glm::radians(static_cast<float>(90)), glm::vec3(1, 0, 0));
     wallModels[0] = glm::rotate(wallModels[0], glm::radians(static_cast<float>(90)), glm::vec3(0, 0, 1));
-    wallModels[0] = glm::scale(wallModels[0], glm::vec3(0.7, 0.7, 0.5));
+    wallModels[0] = glm::scale(wallModels[0], glm::vec3(wallscaling, wallscaling, wallscaling));
     wallModels[1] = glm::translate(glm::mat4(1.0f), glm::vec3(0, floorLevel + wallLevelCorrection, -10));
     wallModels[1] = glm::rotate(wallModels[1], glm::radians(static_cast<float>(90)), glm::vec3(1, 0, 0));
-    wallModels[1] = glm::scale(wallModels[1], glm::vec3(0.7, 0.7, 0.5));
-    wallModels[2] = glm::translate(glm::mat4(1.0f), glm::vec3(0, floorLevel + wallLevelCorrection, 10));
+    wallModels[1] = glm::scale(wallModels[1], glm::vec3(wallscaling, wallscaling, wallscaling));
+    wallModels[2] = glm::translate(glm::mat4(1.0f), glm::vec3(0, floorLevel + wallLevelCorrection, 8.3));
     wallModels[2] = glm::rotate(wallModels[2], glm::radians(static_cast<float>(90)), glm::vec3(1, 0, 0));
-    wallModels[2] = glm::scale(wallModels[2], glm::vec3(0.7, 0.7, 0.5));
+    wallModels[2] = glm::scale(wallModels[2], glm::vec3(wallscaling, wallscaling, wallscaling));
 
     FPSCamera camera(0.1f, 150.0f, static_cast<float>(screenWidth) / static_cast<float>(screenHeight), glm::vec3(0.0f, 0.0f, 5.0f), glm::radians(60.0f));
     Shader shader(SHADERS_PATH "vertex.vert.glsl", SHADERS_PATH "fragment.frag.glsl");
@@ -189,7 +190,7 @@ int main() {
     ObjectLoader<uint16_t> bulbObj(MODELS_PATH "bulb.obj");
     ObjectLoader<uint16_t> floorObj(MODELS_PATH "floor.obj");
     ObjectLoader<uint16_t> ceilingObj(MODELS_PATH "floor.obj");
-    ObjectLoader<uint16_t> wallObj(MODELS_PATH "wall.obj");
+    ObjectLoader<uint16_t> wallObj(MODELS_PATH "newall.obj");
 
     const int samples = { 4 };
     RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);     // here we store depths of each fragment/pixel
@@ -199,7 +200,8 @@ int main() {
 
     std::shared_ptr<Texture2D> drakanImage(new Texture2D(TEXTURES_PATH "drakan.jpg"));
     std::shared_ptr<Texture2D> ceilingImage(new Texture2D(TEXTURES_PATH "ceiling.jpg"));
-    std::shared_ptr<Texture2D> warehouseWallImage(new Texture2D(TEXTURES_PATH "warehousewall.jpg"));
+    std::shared_ptr<Texture2D> floorImage(new Texture2D(TEXTURES_PATH "floor.jpg"));
+    std::shared_ptr<Texture2D> warehouseWallImage(new Texture2D(TEXTURES_PATH "warehousewall2.jpg"));
 
     const int shadowMapWidth = 2048, shadowMapHeight = 2048;
     std::shared_ptr<ShadowMap> shadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
@@ -259,15 +261,15 @@ int main() {
     floors.addVertexBuffer(floorVbo); 
     floors.attachIndexBuffer(floorIbo);
     floors.addVertexBuffer(createVertexBuffer(floorModels, true));
-    //floors.addTexture(floorImage); // index 0
-    //floors.addTexture(shadowMap);  // index 1
+    floors.addTexture(floorImage); // index 0
+    floors.addTexture(shadowMap);  // index 1
 
     ObjectInstanced ceilings(numberOfCeilings);
-    floors.addVertexBuffer(ceilingVbo); 
-    floors.attachIndexBuffer(ceilingIbo);
-    floors.addVertexBuffer(createVertexBuffer(ceilingModels, true));
-    //floors.addTexture(floorImage); // index 0
-    //floors.addTexture(shadowMap);  // index 1
+    ceilings.addVertexBuffer(ceilingVbo); 
+    ceilings.attachIndexBuffer(ceilingIbo);
+    ceilings.addVertexBuffer(createVertexBuffer(ceilingModels, true));
+    ceilings.addTexture(ceilingImage); // index 0
+    ceilings.addTexture(shadowMap);  // index 1
 
     ObjectInstanced walls(numberOfWalls);
     walls.addVertexBuffer(wallVbo); 
@@ -304,7 +306,7 @@ int main() {
     shaderMSAA.use();
     shaderMSAA.modifyUniform<int>("planeTexture", 0);
     shaderMSAA.modifyUniform<int>("numSamples", samples);
-    shaderMSAA.modifyUniform<float>("gamma", 1.6f);     // gamma correction - originally 2.2 but adjust this value so that it looks good
+    shaderMSAA.modifyUniform<float>("gamma", 1.6f);        // gamma correction - originally 2.2 but adjust this value so that it looks good
     shaderMSAA.modifyUniform<float>("exposure", 0.6f);     // High Dynamic Range - adjust this value so that it looks good
 
     shaderCubeMap.use();
