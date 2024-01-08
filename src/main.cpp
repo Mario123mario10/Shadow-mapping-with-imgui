@@ -160,10 +160,17 @@ int main() {
 
 
     const int numberOfCeilings = { 1 };
-    const int ceilingLevel = { 10 };
+    const float ceilingLevel = { 10.5 };
     std::vector<glm::mat4> ceilingModels(numberOfCeilings);
-    ceilingModels[0] = glm::translate(glm::mat4(1.0f), glm::vec3(0, ceilingLevel, 0));
-    ceilingModels[0] = glm::scale(ceilingModels[0], glm::vec3(1, 1, 1));
+    ceilingModels[0] = glm::translate(glm::mat4(1.0f), glm::vec3(1, ceilingLevel, -2.5));
+    ceilingModels[0] = glm::scale(ceilingModels[0], glm::vec3(0.7, 0.7, 1.));
+
+
+    const int numberOfSticks = { 1 };
+    const float stickLevel = { 0 };
+    std::vector<glm::mat4> stickModels(numberOfSticks);
+    stickModels[0] = glm::translate(glm::mat4(1.0f), glm::vec3(16, stickLevel, 0));
+    stickModels[0] = glm::scale(stickModels[0], glm::vec3(2, 2, 2));
 
     const int numberOfWalls = { 3 };
     const int wallLevelCorrection = { 4 };
@@ -189,8 +196,9 @@ int main() {
     ObjectLoader<uint8_t> cubeObj(MODELS_PATH "cube.obj");  // only loads mesh from .obj file
     ObjectLoader<uint16_t> bulbObj(MODELS_PATH "bulb.obj");
     ObjectLoader<uint16_t> floorObj(MODELS_PATH "floor.obj");
-    ObjectLoader<uint16_t> ceilingObj(MODELS_PATH "floor.obj");
+    ObjectLoader<uint16_t> ceilingObj(MODELS_PATH "wall.obj");
     ObjectLoader<uint16_t> wallObj(MODELS_PATH "newall.obj");
+    ObjectLoader<uint16_t> stickObj(MODELS_PATH "badyl.obj");
 
     const int samples = { 4 };
     RenderbufferMultisample hdrRenderbuffer(screenWidth, screenHeight, GL_DEPTH_COMPONENT, samples);     // here we store depths of each fragment/pixel
@@ -202,6 +210,7 @@ int main() {
     std::shared_ptr<Texture2D> ceilingImage(new Texture2D(TEXTURES_PATH "ceiling.jpg"));
     std::shared_ptr<Texture2D> floorImage(new Texture2D(TEXTURES_PATH "floor.jpg"));
     std::shared_ptr<Texture2D> warehouseWallImage(new Texture2D(TEXTURES_PATH "warehousewall2.jpg"));
+    std::shared_ptr<Texture2D> stickImage(new Texture2D(TEXTURES_PATH "wood.jpg"));
 
     const int shadowMapWidth = 2048, shadowMapHeight = 2048;
     std::shared_ptr<ShadowMap> shadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
@@ -228,17 +237,29 @@ int main() {
     auto wallVbo = createVertexBuffer(wallObj.getMesh().vertices);
     auto wallIbo = createIndexBuffer(wallObj.getMesh().indices);
 
+    auto stickVbo = createVertexBuffer(stickObj.getMesh().vertices);
+    auto stickIbo = createIndexBuffer(stickObj.getMesh().indices);
 
 
-    PerspectiveLight pointLight(glm::radians(120.0f), 1.0f, 0.1f, 100.0f);
-    pointLight.setPosition(0.0f, 10.0f, 0.0f);
-    pointLight.setViewDirection(0.0f, -1.0f, -1.0f);
-    pointLight.setColor(10.0f, 1.0f, 1.0f);
+
+    PerspectiveLight pointLight(glm::radians(120.0f), 1.0f, 0.1f, 15.0f);
+    pointLight.setPosition(0.0f, 9.6f, 0.0f);
+    pointLight.setViewDirection(0.0f, -5.0f, -0.5f);
+    pointLight.setColor(1.0f, 1.0f, 1.0f);
     pointLight.setAttenuation(1.0f, 0.09f, 0.032f);
     pointLight.setAmbient(0.0f, 0.0f, 0.0f);
     pointLight.setDiffuse(1.0f, 1.0f, 1.0f);
     pointLight.setSpecular(1.0f, 1.0f, 1.0f);
     
+//    PerspectiveLight pointLight(glm::radians(120.0f), 1.0f, 0.1f, 15.0f);
+//    pointLight.setPosition(0.0f, 9.6f, 0.0f);
+//    pointLight.setViewDirection(0.0f, -5.0f, -0.5f);
+//    pointLight.setColor(1.0f, 1.0f, 1.0f);
+//    pointLight.setAttenuation(1.0f, 0.09f, 0.032f);
+//    pointLight.setAmbient(0.0f, 0.0f, 0.0f);
+//    pointLight.setDiffuse(1.0f, 1.0f, 1.0f);
+//    pointLight.setSpecular(1.0f, 1.0f, 1.0f);
+//    
     SpotLight spotLight(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
     spotLight.setPosition(0.0f, 0.0f, 0.0f);
     spotLight.setViewDirection(0.0f, 0.0f, -1.0f);
@@ -278,6 +299,13 @@ int main() {
     walls.addTexture(warehouseWallImage); // index 0
     walls.addTexture(shadowMap);  // index 1
 
+    ObjectInstanced sticks(numberOfSticks);
+    sticks.addVertexBuffer(stickVbo); 
+    sticks.attachIndexBuffer(stickIbo);
+    sticks.addVertexBuffer(createVertexBuffer(stickModels, true));
+    sticks.addTexture(stickImage); // index 0
+    sticks.addTexture(shadowMap);  // index 1
+
 
     Object bulb;    // regular cube object
     bulb.addVertexBuffer(bulbVbo);
@@ -315,7 +343,7 @@ int main() {
 
     screen.addTexture(hdrTexture);
 
-    glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), pointLight.getPosition()) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+    glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), pointLight.getPosition()) * glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
     const glm::mat4 lightPV = pointLight.getProjectionMatrix() * pointLight.getViewMatrix();
 
     camera.setMovementSpeed(7.0f);
@@ -373,7 +401,8 @@ int main() {
         cubes.renderGeometry();
         floors.renderGeometry();
         walls.renderGeometry();
-        //ceilings.renderGeometry();
+        ceilings.renderGeometry();
+        sticks.renderGeometry();
         glDisable(GL_POLYGON_OFFSET_FILL);
         
         
@@ -389,7 +418,8 @@ int main() {
         cubes.render();
         walls.render();
         floors.render();
-        //ceilings.render();
+        ceilings.render();
+        sticks.render();
 
         // flashlight
         shader.modifyUniform<glm::vec3>("spotlight.position", spotLight.getPosition());
