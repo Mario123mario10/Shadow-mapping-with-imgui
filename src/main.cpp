@@ -230,9 +230,9 @@ int main() {
 
 
 
-    PerspectiveLight pointLight(glm::radians(160.0f), 1.0f, 0.1f, 100.0f);
+    PerspectiveLight pointLight(glm::radians(120.0f), 1.0f, 0.1f, 100.0f);
     pointLight.setPosition(0.0f, 10.0f, 0.0f);
-    pointLight.setViewDirection(0.0f, 1.0f, 0.0f);
+    pointLight.setViewDirection(0.0f, -1.0f, -1.0f);
     pointLight.setColor(10.0f, 1.0f, 1.0f);
     pointLight.setAttenuation(1.0f, 0.09f, 0.032f);
     pointLight.setAmbient(0.0f, 0.0f, 0.0f);
