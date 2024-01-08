@@ -76,7 +76,7 @@ uniform DirLight dirLight[maxNumDirPointLights];
 uniform Spotlight spotlight;
 
 uniform sampler2D diffuseTexture;
-uniform sampler2DShadow shadowMap;
+uniform sampler2DShadow shadowMap[2];
 
 float calculateShadow(int index) {
     vec3 lightFrag = lightFragPos[index].xyz / lightFragPos[index].w;
@@ -84,7 +84,7 @@ float calculateShadow(int index) {
         return 1.0;
     float sum = 0.0;
     for(int i = 0; i < KELNER_SIZE; i++) {
-        sum += textureOffset(shadowMap, lightFrag.xyz, offsets[i]);
+        sum += textureOffset(shadowMap[index], lightFrag.xyz, offsets[i]);
     }
     return sum / KELNER_SIZE;
 }

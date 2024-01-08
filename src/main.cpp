@@ -213,7 +213,8 @@ int main() {
     std::shared_ptr<Texture2D> stickImage(new Texture2D(TEXTURES_PATH "wood.jpg"));
 
     const int shadowMapWidth = 2048, shadowMapHeight = 2048;
-    std::shared_ptr<ShadowMap> shadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
+    std::shared_ptr<ShadowMap> ceilingShadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
+    std::shared_ptr<ShadowMap> standingShadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
     
     //std::shared_ptr<Texture2D> textureImage(new Texture2D(TEXTURES_PATH "crate.jpg"));
 
@@ -240,26 +241,24 @@ int main() {
     auto stickVbo = createVertexBuffer(stickObj.getMesh().vertices);
     auto stickIbo = createIndexBuffer(stickObj.getMesh().indices);
 
-
-
     PerspectiveLight pointLight(glm::radians(120.0f), 1.0f, 0.1f, 15.0f);
     pointLight.setPosition(0.0f, 9.6f, 0.0f);
     pointLight.setViewDirection(0.0f, -5.0f, -0.5f);
     pointLight.setColor(1.0f, 1.0f, 1.0f);
-    pointLight.setAttenuation(1.0f, 0.09f, 0.032f);
+    pointLight.setAttenuation(1.0f, 0.18f, 0.064f);
     pointLight.setAmbient(0.0f, 0.0f, 0.0f);
-    pointLight.setDiffuse(1.0f, 1.0f, 1.0f);
+    pointLight.setDiffuse(0.5f, 0.5f, 0.5f);
     pointLight.setSpecular(1.0f, 1.0f, 1.0f);
     
-//    PerspectiveLight pointLight(glm::radians(120.0f), 1.0f, 0.1f, 15.0f);
-//    pointLight.setPosition(0.0f, 9.6f, 0.0f);
-//    pointLight.setViewDirection(0.0f, -5.0f, -0.5f);
-//    pointLight.setColor(1.0f, 1.0f, 1.0f);
-//    pointLight.setAttenuation(1.0f, 0.09f, 0.032f);
-//    pointLight.setAmbient(0.0f, 0.0f, 0.0f);
-//    pointLight.setDiffuse(1.0f, 1.0f, 1.0f);
-//    pointLight.setSpecular(1.0f, 1.0f, 1.0f);
-//    
+    PerspectiveLight standingLight(glm::radians(120.0f), 1.0f, 0.1f, 30.0f);
+    standingLight.setPosition(16.0f, 6.4f, 0.0f);
+    standingLight.setViewDirection(-3.0f, 0.0f, -0.5f);
+    standingLight.setColor(1.0f, 1.0f, 1.0f);
+    standingLight.setAttenuation(1.0f, 0.045f, 0.016f);
+    standingLight.setAmbient(0.0f, 0.0f, 0.0f);
+    standingLight.setDiffuse(1.0f, 1.0f, 1.0f);
+    standingLight.setSpecular(1.0f, 1.0f, 1.0f);
+    
     SpotLight spotLight(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
     spotLight.setPosition(0.0f, 0.0f, 0.0f);
     spotLight.setViewDirection(0.0f, 0.0f, -1.0f);
@@ -276,35 +275,40 @@ int main() {
     cubes.attachIndexBuffer(cubeIbo);
     cubes.addVertexBuffer(createVertexBuffer(cubeModels, true));    // second vertex buffer which stores model matrices of our cubes held in "cubes" variable
     cubes.addTexture(crateImage); // index 0
-    cubes.addTexture(shadowMap);    // index 1
+    cubes.addTexture(ceilingShadowMap);    // index 1
+    cubes.addTexture(standingShadowMap);    // index 2
     
     ObjectInstanced floors(numberOfFloors);
     floors.addVertexBuffer(floorVbo); 
     floors.attachIndexBuffer(floorIbo);
     floors.addVertexBuffer(createVertexBuffer(floorModels, true));
     floors.addTexture(floorImage); // index 0
-    floors.addTexture(shadowMap);  // index 1
+    floors.addTexture(ceilingShadowMap);  // index 1
+    floors.addTexture(standingShadowMap);   // index 2
 
     ObjectInstanced ceilings(numberOfCeilings);
     ceilings.addVertexBuffer(ceilingVbo); 
     ceilings.attachIndexBuffer(ceilingIbo);
     ceilings.addVertexBuffer(createVertexBuffer(ceilingModels, true));
     ceilings.addTexture(ceilingImage); // index 0
-    ceilings.addTexture(shadowMap);  // index 1
+    ceilings.addTexture(ceilingShadowMap);  // index 1
+    ceilings.addTexture(standingShadowMap);  // index 2
 
     ObjectInstanced walls(numberOfWalls);
     walls.addVertexBuffer(wallVbo); 
     walls.attachIndexBuffer(wallIbo);
     walls.addVertexBuffer(createVertexBuffer(wallModels, true));
     walls.addTexture(warehouseWallImage); // index 0
-    walls.addTexture(shadowMap);  // index 1
+    walls.addTexture(ceilingShadowMap);  // index 1
+    walls.addTexture(standingShadowMap);  // index 2
 
     ObjectInstanced sticks(numberOfSticks);
     sticks.addVertexBuffer(stickVbo); 
     sticks.attachIndexBuffer(stickIbo);
     sticks.addVertexBuffer(createVertexBuffer(stickModels, true));
     sticks.addTexture(stickImage); // index 0
-    sticks.addTexture(shadowMap);  // index 1
+    sticks.addTexture(ceilingShadowMap);  // index 1
+    sticks.addTexture(standingShadowMap);  // index 2
 
 
     Object bulb;    // regular cube object
@@ -328,7 +332,12 @@ int main() {
 
     Framebuffer shadowFramebuffer({ GL_NONE }, GL_NONE);
     shadowFramebuffer.use();
-    shadowFramebuffer.attach(*shadowMap, GL_DEPTH_ATTACHMENT);
+    shadowFramebuffer.attach(*ceilingShadowMap, GL_DEPTH_ATTACHMENT);
+    shadowFramebuffer.isComplete();
+
+    Framebuffer standingShadowFramebuffer({ GL_NONE }, GL_NONE);
+    standingShadowFramebuffer.use();
+    standingShadowFramebuffer.attach(*standingShadowMap, GL_DEPTH_ATTACHMENT);
     shadowFramebuffer.isComplete();
 
     shaderMSAA.use();
@@ -343,16 +352,21 @@ int main() {
 
     screen.addTexture(hdrTexture);
 
+
     glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), pointLight.getPosition()) * glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
     const glm::mat4 lightPV = pointLight.getProjectionMatrix() * pointLight.getViewMatrix();
+
+    glm::mat4 standingLampModel = glm::translate(glm::mat4(1.0f), standingLight.getPosition()) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+    const glm::mat4 standingLightPV = standingLight.getProjectionMatrix() * standingLight.getViewMatrix();
 
     camera.setMovementSpeed(7.0f);
     camera.setMouseSpeed(0.05f);
 
     shader.use();
-    shader.modifyUniform<int>("numPointLights", 1);
+    shader.modifyUniform<int>("numPointLights", 2);
+    shader.modifyUniform<int>("numDirLights", 0);
+    // point light (ceil)
     shader.modifyUniform<glm::mat4>("LightProjViewMat[0]", lightPV);    // the same matrix as in here ***
-    // point light
     shader.modifyUniform<glm::vec3>("pointLight[0].position", pointLight.getPosition());
     shader.modifyUniform<glm::vec3>("pointLight[0].color", pointLight.getColor());
     shader.modifyUniform<glm::vec3>("pointLight[0].ambient", pointLight.getAmbient());
@@ -362,6 +376,19 @@ int main() {
     shader.modifyUniform<float>("pointLight[0].linear", pointLight.getAttenuationLinearFactor());
     shader.modifyUniform<float>("pointLight[0].quadratic", pointLight.getAttenuationQuadraticFactor());
     shader.modifyUniform<int>("pointLight[0].shadowIndex", 0);   // *** index of LightProjViewMat
+
+    // point light (BADYL)
+    shader.modifyUniform<glm::mat4>("LightProjViewMat[1]", standingLightPV);
+    shader.modifyUniform<glm::vec3>("pointLight[1].position", standingLight.getPosition());
+    shader.modifyUniform<glm::vec3>("pointLight[1].color", standingLight.getColor());
+    shader.modifyUniform<glm::vec3>("pointLight[1].ambient", standingLight.getAmbient());
+    shader.modifyUniform<glm::vec3>("pointLight[1].diffuse", standingLight.getDiffuse());
+    shader.modifyUniform<glm::vec3>("pointLight[1].specular", standingLight.getSpecular());
+    shader.modifyUniform<float>("pointLight[1].constant", standingLight.getAttenuationConstantFactor());
+    shader.modifyUniform<float>("pointLight[1].linear", standingLight.getAttenuationLinearFactor());
+    shader.modifyUniform<float>("pointLight[1].quadratic", standingLight.getAttenuationQuadraticFactor());
+    shader.modifyUniform<int>("pointLight[1].shadowIndex", 1);   // *** index of LightProjViewMat
+
     // spotlight
     shader.modifyUniform<glm::vec3>("spotlight.ambient", spotLight.getAmbient());
     shader.modifyUniform<glm::vec3>("spotlight.diffuse", spotLight.getDiffuse());
@@ -374,7 +401,8 @@ int main() {
     shader.modifyUniform<float>("spotlight.outerCutOff", spotLight.getOuterCutOff());
 
     shader.modifyUniform<int>("diffuseTexture", 0);
-    shader.modifyUniform<int>("shadowMap", 1);
+    shader.modifyUniform<int>("shadowMap[0]", 1);
+    shader.modifyUniform<int>("shadowMap[1]", 2);
 
     float last = 0.0f;
     while (!glfwWindowShouldClose(window)) {
@@ -390,21 +418,32 @@ int main() {
         spotLight.setViewDirection(camera.getDirectionVector());
 
         // shadow depth map
+        // 1. ceiling lamp.
         shadowFramebuffer.use();
         glViewport(0, 0, shadowMapWidth, shadowMapHeight);
         glClear(GL_DEPTH_BUFFER_BIT);
-        shaderShadow.use();
-        shaderShadow.modifyUniform<glm::mat4>("PV", lightPV);
-        shaderShadow.modifyUniform<bool>("instanced", true);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.7f, 3.0f);
+        shaderShadow.use();
+        shaderShadow.modifyUniform<bool>("instanced", true);
+        shaderShadow.modifyUniform<glm::mat4>("PV", lightPV);
         cubes.renderGeometry();
         floors.renderGeometry();
         walls.renderGeometry();
         ceilings.renderGeometry();
         sticks.renderGeometry();
+
+        // 2. standing lamp.
+        standingShadowFramebuffer.use();
+        glClear(GL_DEPTH_BUFFER_BIT);
+        shaderShadow.modifyUniform<glm::mat4>("PV", standingLightPV);
+        cubes.renderGeometry();
+        floors.renderGeometry();
+        walls.renderGeometry();
+        ceilings.renderGeometry();
+        sticks.renderGeometry();
+
         glDisable(GL_POLYGON_OFFSET_FILL);
-        
         
         // From now on we render to our own framebuffer.
         hdrFramebuffer.use(); 
@@ -428,6 +467,8 @@ int main() {
         // Draw light cube.
         lightCubeShader.use();
         lightCubeShader.modifyUniform<glm::mat4>("PVM", cameraPV * lightModel);
+        bulb.render();
+        lightCubeShader.modifyUniform<glm::mat4>("PVM", cameraPV * standingLampModel);
         bulb.render();
 
         // Render sky box at the end in terms of scene geometry.
