@@ -78,6 +78,8 @@ class BoxStack {
         }
 };
 
+bool flashLightOn = false;
+
 
 int main() {
     if (!glfwInit()) {
@@ -89,7 +91,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    int screenWidth = 1920, screenHeight = 1080;
+    int screenWidth = 3840, screenHeight = 2400;
     GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Interpolated Triangle with Shaders", NULL, NULL);
     if (!window) {
         std::cerr << "Failed to create GLFW window." << std::endl;
@@ -472,6 +474,7 @@ int main() {
 
         // Draw instanced cubes.
         shader.use();
+        shader.modifyUniform<bool>("flashlightOn", flashLightOn);
         shader.modifyUniform<glm::mat4>("ProjViewMat", cameraPV);
         shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
         cubes.render();
@@ -521,6 +524,9 @@ int main() {
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime)
 {
     double xpos, ypos;
+    static float flashLightDelay = 0.0f;
+    static float flashLightThreshhold = 1.0f;
+    flashLightDelay += deltaTime;
     glfwGetCursorPos(window, &xpos, &ypos);
     camera.updateEuler(xpos, ypos);
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -537,4 +543,8 @@ void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime)
         camera.processKeyboard(Bindings::UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera.processKeyboard(Bindings::DOWN, deltaTime);
+    if (flashLightDelay > flashLightThreshhold && glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+        flashLightDelay = 0.0f;
+        flashLightOn = !flashLightOn;
+    }
 }

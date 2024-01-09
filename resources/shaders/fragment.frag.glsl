@@ -65,6 +65,8 @@ const ivec2 offsets[] = ivec2[](
 	ivec2(-1, -1), ivec2(0, -1), ivec2(1, -1)
 );
 
+uniform bool flashlightOn;
+
 uniform vec3 viewPos;
 
 uniform int numPointLights;
@@ -163,7 +165,9 @@ void main() {
         result += calcPointLight(pointLight[i], norm, viewDir);
     }
 
-    result += calcSpotlight(spotlight, norm, viewDir);
+    if(flashlightOn) {
+        result += calcSpotlight(spotlight, norm, viewDir);
+    }
 
     // final light
     outColor =  vec4(fragColor * result, 1.0);
