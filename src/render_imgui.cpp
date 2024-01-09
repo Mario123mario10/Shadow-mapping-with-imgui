@@ -9,7 +9,7 @@
 #include "imgui_impl_opengl3.h"
 
 
-void renderImgui(int screenWidth, int screenHeight, std::shared_ptr<Texture2D> windowTexture, Shader shader, PerspectiveLight pointLight, PerspectiveLight standingLight, SpotLight spotLight) {
+void renderImgui(int screenWidth, int screenHeight, std::shared_ptr<Texture2D> windowTexture, const Shader& shader, PerspectiveLight pointLight, PerspectiveLight standingLight, SpotLight spotLight) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();

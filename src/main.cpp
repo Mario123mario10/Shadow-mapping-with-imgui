@@ -32,7 +32,7 @@
 
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-void renderImgui(int screenWidth, int screenHeight, std::shared_ptr<Texture2D> windowTexture, Shader shader, PerspectiveLight pointLight, PerspectiveLight standingLight, SpotLight spotLight);
+void renderImgui(int screenWidth, int screenHeight, std::shared_ptr<Texture2D> windowTexture, const Shader& shader, PerspectiveLight pointLight, PerspectiveLight standingLight, SpotLight spotLight);
 
 
 template<typename T>
