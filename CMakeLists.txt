@@ -46,7 +46,7 @@ target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC TEXTURES_PATH="${CMAKE
 target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC CUBEMAP_PATH="${CMAKE_SOURCE_DIR}/resources/cubemap/")
 
 
-target_sources("${CMAKE_PROJECT_NAME}" PRIVATE ${MY_SOURCES} )
+target_sources("${CMAKE_PROJECT_NAME}" PRIVATE ${MY_SOURCES}  "src/render_imgui.cpp")
 
 
 if(MSVC) # Microsoft Visual Studio
