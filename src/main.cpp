@@ -25,14 +25,14 @@
 #include <chrono>
 #include <numbers>
 
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-void renderImgui(int screenWidth, int screenHeight, std::shared_ptr<Texture2D> windowTexture, const Shader& shader, PerspectiveLight pointLight, PerspectiveLight standingLight, SpotLight spotLight);
+void renderImgui(int screenWidth, int screenHeight, std::shared_ptr<Texture2D> windowTexture, const Shader& shader, PerspectiveLight& pointLight, PerspectiveLight& standingLight, SpotLight& spotLight);
 
 
 template<typename T>
@@ -89,7 +89,11 @@ class BoxStack {
 struct CallbackData {
     bool mouseLocked = false;
     double xpos = -1.0, ypos = -1.0;
+    bool flashLightOn = false;
 };
+
+
+
 
 
 int main() {
@@ -98,11 +102,11 @@ int main() {
         return -1;
     }
 
-
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    //int screenWidth = 3840, screenHeight = 2400;
     int screenWidth = 1920, screenHeight = 1080;
 
     GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Interpolated Triangle with Shaders", NULL, NULL);
@@ -235,7 +239,6 @@ int main() {
     std::shared_ptr<Texture2D> warehouseWallImage(new Texture2D(TEXTURES_PATH "warehousewall2.jpg"));
     std::shared_ptr<Texture2D> stickImage(new Texture2D(TEXTURES_PATH "wood.jpg"));
     std::shared_ptr<Texture2D> gizmoImage(new Texture2D(TEXTURES_PATH "marble.jpg"));
-   
 
     const int shadowMapWidth = 2048, shadowMapHeight = 2048;
     std::shared_ptr<ShadowMap> ceilingShadowMap(new ShadowMap(shadowMapWidth, shadowMapHeight, GL_DEPTH_COMPONENT32F));
@@ -276,7 +279,7 @@ int main() {
     pointLight.setAttenuation(0.5f, 0.09f, 0.04f);
     pointLight.setAmbient(0.0f, 0.0f, 0.0f);
     pointLight.setDiffuse(0.5f, 0.5f, 0.5f);
-    pointLight.setSpecular(0.0f, 0.0f, 0.0f);
+    pointLight.setSpecular(1.0f, 1.0f, 1.0f);
     
     PerspectiveLight standingLight(glm::radians(120.0f), 1.0f, 0.1f, 30.0f);
     standingLight.setPosition(stickBulb, 6.4f, 0.0f);
@@ -391,6 +394,7 @@ int main() {
 
     screen.addTexture(hdrTexture);
 
+
     glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), pointLight.getPosition()) * glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
     const glm::mat4 lightPV = pointLight.getProjectionMatrix() * pointLight.getViewMatrix();
 
@@ -443,9 +447,9 @@ int main() {
     shader.modifyUniform<int>("shadowMap[1]", 2);
 
     // ImGui
-
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr;
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
@@ -516,7 +520,7 @@ int main() {
 
         // Draw instanced cubes.
         shader.use();
-        
+        shader.modifyUniform<bool>("flashlightOn", callbackData.flashLightOn);
         shader.modifyUniform<glm::mat4>("ProjViewMat", cameraPV);
         shader.modifyUniform<glm::vec3>("viewPos", camera.getPosition());
         cubes.render();
@@ -527,11 +531,8 @@ int main() {
         gizmos.render();
 
         // flashlight
-        
         shader.modifyUniform<glm::vec3>("spotlight.position", spotLight.getPosition());
         shader.modifyUniform<glm::vec3>("spotlight.direction", spotLight.getViewDirection());
-
-       
         // Draw light cube.
         lightCubeShader.use();
         float multiplier = 16;
@@ -558,10 +559,8 @@ int main() {
         glDepthFunc(GL_LESS);
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // from now on we render to default framebuffer
 
-         // Rendering ImGui
-        
+        // Rendering ImGui
         renderImgui(screenWidth, screenHeight, windowTexture, shader, pointLight, standingLight, spotLight);
-
 
         // Swap the front and back buffers
         glfwSwapBuffers(window);
@@ -572,18 +571,22 @@ int main() {
     return 0;
 }
 
-
-
 void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime)
 {
-    CallbackData* callbackData = static_cast<CallbackData*>(glfwGetWindowUserPointer(window));
     
+    CallbackData* callbackData = static_cast<CallbackData*>(glfwGetWindowUserPointer(window));
+
     if (!callbackData)
         return;
     
-    if (callbackData -> mouseLocked)
-        glfwGetCursorPos(window, &callbackData -> xpos, &callbackData -> ypos);
-    camera.updateEuler(callbackData -> xpos, callbackData -> ypos);
+    static float flashLightDelay = 0.0f;
+    static float flashLightThreshhold = 1.0f;
+    flashLightDelay += deltaTime;
+
+    if (callbackData->mouseLocked)
+        glfwGetCursorPos(window, &callbackData->xpos, &callbackData->ypos);
+
+    camera.updateEuler(callbackData->xpos, callbackData->ypos);
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -598,17 +601,21 @@ void processInput(GLFWwindow* window, FPSCamera& camera, float deltaTime)
         camera.processKeyboard(Bindings::UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera.processKeyboard(Bindings::DOWN, deltaTime);
-
+    if (flashLightDelay > flashLightThreshhold && glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+        flashLightDelay = 0.0f;
+        callbackData->flashLightOn = !callbackData->flashLightOn;
+    }
 }
+
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     CallbackData* callbackData = static_cast<CallbackData*>(glfwGetWindowUserPointer(window));
-    
+
     if (!callbackData)
         return;
 
     if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS) {
-        callbackData -> mouseLocked = !callbackData -> mouseLocked;
+        callbackData->mouseLocked = !callbackData->mouseLocked;
         if (callbackData->mouseLocked) {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             glfwSetCursorPos(window, callbackData->xpos, callbackData->ypos);
@@ -618,7 +625,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
             glfwGetCursorPos(window, &callbackData->xpos, &callbackData->ypos);
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
-            
-            
+
+
     }
 }

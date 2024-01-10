@@ -58,6 +58,18 @@ void Light::setSpecular(float x, float y, float z) {
 	specular = { x, y, z };
 }
 
+void Light::setAttenuationConstantFactor(float x) {
+	attenuation.x = x;
+}
+
+void Light::setAttenuationLinearFactor(float y) {
+	attenuation.y = y;
+}
+
+void Light::setAttenuationQuadraticFactor(float z) {
+	attenuation.z = z;
+}
+
 const glm::vec3& Light::getPosition() const {
 	return position;
 }

@@ -30,6 +30,11 @@ public:
 	void setDiffuse(float x, float y, float z);
 	void setSpecular(const glm::vec3& specular);
 	void setSpecular(float x, float y, float z);
+	void setAttenuationConstantFactor(float x);
+	void setAttenuationLinearFactor(float y);
+	void setAttenuationQuadraticFactor(float z);
+	virtual void setInnerCutOff(float cutoff) {};
+	virtual void setOuterCutOff(float cutoff) {};
 	const glm::vec3& getPosition() const;
 	const glm::vec3& getColor() const;
 	const glm::vec3& getAttenuation() const;
